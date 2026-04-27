@@ -1,8 +1,73 @@
 ﻿@page "/"
+@using CoreLTToeic.Domain.Entities
+@using AntDesign
+@inject CoreLTToeic.Application.Interfaces.IExamRepository ExamRepository
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Create new Exam</h1>
 
-@code{
+<Form Model="@examModel" OnFinish="OnFinish">
+    <FormItem Label="Name">
+        <Input @bind-Value="examModel.Name" Placeholder="Enter exam name" />
+    </FormItem>
+
+    <FormItem Label="Description">
+        <Input @bind-Value="examModel.Description" Placeholder="Enter description" />
+    </FormItem>
+
+    <FormItem Label="LType">
+        <Input @bind-Value="examModel.LType" Placeholder="Enter LType" />
+    </FormItem>
+
+    <FormItem Label="Type">
+        <Input @bind-Value="examModel.Type" Placeholder="Enter Type" />
+    </FormItem>
+
+    <FormItem>
+        <Button Type="ButtonType.Primary" HtmlType="submit">Add Exam</Button>
+        <Button OnClick="ResetForm" Style="margin-left:8px;">Reset</Button>
+    </FormItem>
+</Form>
+
+@if (!string.IsNullOrEmpty(StatusMessage))
+{
+    <Alert Message="@StatusMessage" Type="@(IsError ? AlertType.Error : AlertType.Success)"  />
+}
+
+@code {
+    private Exam examModel = new();
+    private string StatusMessage = string.Empty;
+    private bool IsError;
+
+    private async Task OnFinish()
+    {
+        StatusMessage = string.Empty;
+        IsError = false;
+
+        try
+        {
+            if (examModel is null)
+            {
+                throw new ArgumentNullException(nameof(examModel));
+            }
+
+            await ExamRepository.AddAsync(examModel);
+
+            StatusMessage = "Exam added successfully.";
+            examModel = new Exam();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            IsError = true;
+            StatusMessage = $"Failed to add exam: {ex.Message}";
+        }
+    }
+
+    private void ResetForm()
+    {
+        examModel = new Exam();
+        StatusMessage = string.Empty;
+    }
 }

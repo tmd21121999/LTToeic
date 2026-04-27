@@ -1,26 +1,36 @@
-﻿using CoreLTToeic.Application.Interfaces;
+﻿using System;
+using System.Threading.Tasks;
 using CoreLTToeic.Domain.Entities;
 using CoreLTToeic.Infrastructure.Context;
+using CoreLTToeic.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CoreLTToeic.Infrastructure.Repositories
 {
     public class ExamRepository : IExamRepository
     {
         private readonly AppDbContext _context;
-        public ExamRepository(IDbContextFactory<AppDbContext> factory) 
+        public ExamRepository(IDbContextFactory<AppDbContext> factory)
         {
             _context = factory.CreateDbContext();
         }
 
-        public Task AddAsync(Exam exam)
+        public async Task AddAsync(Exam exam)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (exam is null)
+                {
+                    throw new ArgumentNullException(nameof(exam));
+                }
+
+                await _context.Exams.AddAsync(exam);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
     }
 }
