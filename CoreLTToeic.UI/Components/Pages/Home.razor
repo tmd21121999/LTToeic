@@ -1,7 +1,8 @@
 ﻿@page "/"
-@using CoreLTToeic.Domain.Entities
 @using AntDesign
-@inject CoreLTToeic.Application.Interfaces.IExamRepository ExamRepository
+@using CoreLTToeic.Application.Models.EditModels
+@using CoreLTToeic.Application.Models.ViewModels
+@inject CoreLTToeic.Application.Interfaces.IService.IExamService ExamService
 
 <PageTitle>Home</PageTitle>
 
@@ -36,27 +37,17 @@
 }
 
 @code {
-    private Exam examModel = new();
+    private ExamEditModel examModel = new();
     private string StatusMessage = string.Empty;
     private bool IsError;
 
     private async Task OnFinish()
     {
-        StatusMessage = string.Empty;
-        IsError = false;
-
         try
         {
-            if (examModel is null)
-            {
-                throw new ArgumentNullException(nameof(examModel));
-            }
-
-            await ExamRepository.AddAsync(examModel);
-
+            await ExamService.AddAsync(examModel);
             StatusMessage = "Exam added successfully.";
-            examModel = new Exam();
-            StateHasChanged();
+            examModel = new ExamEditModel();
         }
         catch (Exception ex)
         {
@@ -67,7 +58,7 @@
 
     private void ResetForm()
     {
-        examModel = new Exam();
+        examModel = new ExamEditModel();
         StatusMessage = string.Empty;
     }
 }

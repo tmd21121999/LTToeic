@@ -1,0 +1,38 @@
+﻿@page "/admin/quan-li-de-thi"
+@using CoreLTToeic.Application.Interfaces.IRepository
+@inject IExamRepository ExamRepository
+
+<PageHeader Title="Danh sách đề thi" SubTitle="Quản lý các đề thi đã tạo">
+    <PageHeaderExtra>
+        <Breadcrumb>
+            <BreadcrumbItem>Admin</BreadcrumbItem>
+            <BreadcrumbItem>Danh sách đề thi</BreadcrumbItem>
+        </Breadcrumb>
+    </PageHeaderExtra>
+</PageHeader>
+
+<Table DataSource="exams" TItem="Exam">
+    <PropertyColumn Title="Id" Property="x=>x.Id"/>
+    <PropertyColumn Title="Tên" Property="x => x.Name" />
+    <PropertyColumn Title="Mô tả" Property="x => x.Description" />
+    <PropertyColumn Title="Loại" Property="x => x.Type" />
+    <ActionColumn Ellipsis="true" Width="80" Title="Thao tác">
+        @* <Button OnClick="Add()"></Button> *@
+    </ActionColumn>
+</Table>
+
+
+
+@code {
+    IEnumerable<Exam> exams = new List<Exam>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        exams = await ExamRepository.GetAllAsync();
+    }
+
+    void EditDetail()
+    {
+        
+    }
+}

@@ -1,18 +1,15 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using CoreLTToeic.Application.Interfaces.IRepository;
 using CoreLTToeic.Domain.Entities;
 using CoreLTToeic.Infrastructure.Context;
-using CoreLTToeic.Application.Interfaces;
+using CoreLTToeic.Infrastructure.Pattern;
 using Microsoft.EntityFrameworkCore;
 
 namespace CoreLTToeic.Infrastructure.Repositories
 {
-    public class ExamRepository : IExamRepository
+    public class ExamRepository : Repository<Exam>, IExamRepository
     {
-        private readonly AppDbContext _context;
-        public ExamRepository(IDbContextFactory<AppDbContext> factory)
+        public ExamRepository(IDbContextFactory<AppDbContext> factory) : base(factory)
         {
-            _context = factory.CreateDbContext();
         }
 
         public async Task AddAsync(Exam exam)
@@ -29,7 +26,19 @@ namespace CoreLTToeic.Infrastructure.Repositories
             }
             catch (Exception ex)
             {
+                throw;
+            }
+        }
 
+        public async Task<List<Exam>> GetAllAsync()
+        {
+            try
+            {
+                return await _context.Exams.ToListAsync();
+            }
+            catch (Exception)
+            {
+                return new List<Exam>();
             }
         }
     }

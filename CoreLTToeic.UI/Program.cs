@@ -1,6 +1,6 @@
-using CoreLTToeic.Application.Interfaces;
+using CoreLTToeic.Application.Mapping;
 using CoreLTToeic.Infrastructure.Context;
-using CoreLTToeic.Infrastructure.Repositories;
+using CoreLTToeic.Infrastructure.Helper;
 using CoreLTToeic.UI.Components;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +12,10 @@ builder.Services.AddRazorComponents()
 builder.Services.AddAntDesign();
 
 builder.Services.AddDbContextFactory<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<IExamRepository, ExamRepository>();
+builder.Services.AddRepository();
+builder.Services.AddService();
+
+builder.Services.AddAutoMapper(cfg => { }, typeof(MappingProfile).Assembly);
 
 var app = builder.Build();
 
