@@ -1,7 +1,9 @@
 using CoreLTToeic.Application.Mapping;
+using CoreLTToeic.Domain.Entities;
 using CoreLTToeic.Infrastructure.Context;
 using CoreLTToeic.Infrastructure.Helper;
 using CoreLTToeic.UI.Components;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,12 @@ builder.Services.AddRazorComponents()
 builder.Services.AddAntDesign();
 
 builder.Services.AddDbContextFactory<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+{
+    options.SignIn.RequireConfirmedEmail = true;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
 builder.Services.AddRepository();
 builder.Services.AddService();
 

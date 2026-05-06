@@ -1,0 +1,76 @@
+@page "/register"
+@using AntDesign
+@using System.Linq
+@using CoreLTToeic.Application.Models.EditModels
+@using CoreLTToeic.Application.Interfaces.IRepository
+@inject IAuthRepository AuthRepository
+@inject MessageService Message
+@inject NavigationManager Navigation
+
+<PageTitle>Register</PageTitle>
+
+<h3>Create account</h3>
+
+<Form Model="@model" OnFinish="OnFinish" LabelColSpan="6" WrapperColSpan="14">
+    <FormItem Label="Username" Required>
+        <Input @bind-Value="model.UserName" Placeholder="Username" />
+    </FormItem>
+
+    <FormItem Label="Email" Required>
+        <Input @bind-Value="model.Email" Placeholder="Email" />
+    </FormItem>
+
+    <FormItem Label="Full name">
+        <Input @bind-Value="model.FullName" Placeholder="Full name" />
+    </FormItem>
+
+    <FormItem Label="Password" Required>
+        <Input Type="InputType.Password" @bind-Value="model.Password" Placeholder="Password" />
+    </FormItem>
+
+    <FormItem Label="Confirm" Required>
+        <Input Type="InputType.Password" @bind-Value="model.ConfirmPassword" Placeholder="Confirm password" />
+    </FormItem>
+
+    <FormItem WrapperColOffset="6" WrapperColSpan="14">
+        <Button Type="ButtonType.Primary" HtmlType="submit">Register</Button>
+        <Button OnClick="GoToLogin" Style="margin-left:8px">Go to Login</Button>
+    </FormItem>
+</Form>
+
+@code {
+    private RegisterEditModel model = new RegisterEditModel();
+
+    private void GoToLogin()
+    {
+        Navigation.NavigateTo("/login");
+    }
+
+    private async Task OnFinish()
+    {
+        if (string.IsNullOrWhiteSpace(model.Password) || model.Password != model.ConfirmPassword)
+        {
+            Message.Error("Passwords do not match");
+            return;
+        }
+
+        try
+        {
+            var result = await AuthRepository.Register(model);
+            if (result.Succeeded)
+            {
+                Message.Success("Registration successful. Please check your email to confirm your account.");
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                Message.Error($"Registration failed: {errors}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Message.Error($"Registration error: {ex.Message}");
+        }
+    }
+}

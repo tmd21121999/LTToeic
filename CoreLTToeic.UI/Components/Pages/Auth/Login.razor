@@ -1,0 +1,58 @@
+@page "/login"
+@using AntDesign
+@using CoreLTToeic.Application.Models.EditModels
+@using CoreLTToeic.Application.Interfaces.IRepository
+@inject IAuthRepository AuthRepository
+@inject MessageService Message
+@inject NavigationManager Navigation
+
+<PageTitle>Login</PageTitle>
+
+<h3>Sign in</h3>
+
+<Form Model="@model" OnFinish="OnFinish" LabelColSpan="6" WrapperColSpan="14">
+    <FormItem Label="Username" Required>
+        <Input @bind-Value="model.UserName" Placeholder="Username" />
+    </FormItem>
+
+    <FormItem Label="Password" Required>
+        <Input  @bind-Value="model.Password" Placeholder="Password" />
+    </FormItem>
+
+    <FormItem WrapperColOffset="6" WrapperColSpan="14">
+        <Button Type="ButtonType.Primary" HtmlType="submit">Login</Button>
+        <Button OnClick="NavigateToRegister"
+                Style="margin-left:8px">Register</Button>
+    </FormItem>
+</Form>
+
+@code {
+    private LoginEditModel model = new LoginEditModel();
+
+    void NavigateToRegister()
+    {
+        Navigation.NavigateTo("/register");
+    }
+
+    private async Task OnFinish()
+    {
+        try
+        {
+            var result = await AuthRepository.Login(model);
+            if (result.Succeeded)
+            {
+                Message.Success("Login successful.");
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                Message.Error($"Login failed: {errors}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Message.Error($"Login error: {ex.Message}");
+        }
+    }
+}

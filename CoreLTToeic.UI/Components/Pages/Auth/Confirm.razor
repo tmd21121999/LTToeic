@@ -1,0 +1,62 @@
+@page "/confirm"
+@using Microsoft.AspNetCore.WebUtilities
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<PageTitle>Confirm</PageTitle>
+
+<h3>Email confirmation</h3>
+
+@if (isProcessing)
+{
+    <p>Processing confirmation...</p>
+}
+else if (success)
+{
+    <AntDesign.Alert Message="Email confirmed successfully." Type="AlertType.Success" />
+    <AntDesign.Button OnClick="@(() => Navigation.NavigateTo("/login"))">Go to login</AntDesign.Button>
+}
+else
+{
+    <AntDesign.Alert Message="@message" Type="AlertType.Error" />
+}
+
+@code {
+    private bool isProcessing = true;
+    private bool success;
+    private string message = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (!query.TryGetValue("userId", out var userId) || !query.TryGetValue("token", out var token))
+        {
+            message = "Missing confirmation parameters.";
+            isProcessing = false;
+            return;
+        }
+
+        try
+        {
+            var response = await Http.GetAsync($"/api/auth/confirm?userId={Uri.EscapeDataString(userId)}&token={Uri.EscapeDataString(token)}");
+            if (response.IsSuccessStatusCode)
+            {
+                success = true;
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                message = $"Confirmation failed: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Confirmation error: {ex.Message}";
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+}
