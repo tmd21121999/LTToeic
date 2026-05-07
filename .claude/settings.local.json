@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Recurse -Depth 2)",
+      "Bash(Select-Object -Property FullName, Mode)",
+      "Bash(Sort-Object FullName)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(mkdir -p \"c:/Project/LTToeic/.claude\")",
+      "PowerShell(dotnet build \"c:\\\\Project\\\\LTToeic\\\\LTToeic.sln\" 2>&1)"
+    ],
+    "additionalDirectories": [
+      "c:\\Project\\LTToeic\\.claude"
+    ]
+  }
+}

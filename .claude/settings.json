@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build *)",
+      "Bash(dotnet run *)",
+      "Bash(dotnet add *)",
+      "Bash(dotnet ef migrations *)",
+      "Bash(dotnet ef database update *)",
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git status)",
+      "Bash(git log)",
+      "Bash(git diff)"
+    ]
+  }
+}
