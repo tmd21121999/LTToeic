@@ -1,38 +1,396 @@
-﻿@page "/admin/quan-li-de-thi"
-@using CoreLTToeic.Application.Interfaces.IRepository
-@inject IExamRepository ExamRepository
+@page "/admin/quan-li-de-thi"
+@inject ITestService TestService
+@inject IWebHostEnvironment Env
+@inject MessageService Message
+@inject ModalService Modal
 
-<PageHeader Title="Danh sách đề thi" SubTitle="Quản lý các đề thi đã tạo">
-    <PageHeaderExtra>
-        <Breadcrumb>
-            <BreadcrumbItem>Admin</BreadcrumbItem>
-            <BreadcrumbItem>Danh sách đề thi</BreadcrumbItem>
-        </Breadcrumb>
-    </PageHeaderExtra>
-</PageHeader>
+<div class="admin-page">
+    <div class="admin-header">
+        <h2 class="admin-title">Quản lý đề thi</h2>
+        <Button Type="ButtonType.Primary" Icon="plus" OnClick="OpenAddTest">Thêm đề thi</Button>
+    </div>
 
-<Table DataSource="exams" TItem="Exam">
-    <PropertyColumn Title="Id" Property="x=>x.Id"/>
-    <PropertyColumn Title="Tên" Property="x => x.Name" />
-    <PropertyColumn Title="Mô tả" Property="x => x.Description" />
-    <PropertyColumn Title="Loại" Property="x => x.Type" />
-    <ActionColumn Ellipsis="true" Width="80" Title="Thao tác">
-        @* <Button OnClick="Add()"></Button> *@
-    </ActionColumn>
-</Table>
+    <Table DataSource="_tests" TItem="TestViewModel" Loading="_loading" Bordered>
+        <PropertyColumn Property="c => c.Id" Title="ID" Width="70" />
+        <PropertyColumn Property="c => c.Title" Title="Tiêu đề" />
+        <PropertyColumn Property="c => c.CategoryName" Title="Loại" Width="140" />
+        <PropertyColumn Property="c => c.Duration" Title="Thời gian (phút)" Width="130" />
+        <PropertyColumn Property="c => c.TotalQuestions" Title="Số câu" Width="90" />
+        <ActionColumn Title="Trạng thái" Width="130">
+            <Tag Color="@(context.Status == TestStatus.Active ? "success" : context.Status == TestStatus.Draft ? "warning" : "error")">
+                @(context.Status == TestStatus.Active ? "Hoạt động" : context.Status == TestStatus.Draft ? "Nháp" : "Ngưng")
+            </Tag>
+        </ActionColumn>
+        <ActionColumn Title="Thao tác" Width="220">
+            <Space>
+                <SpaceItem>
+                    <Button Size="ButtonSize.Small" Icon="bars" OnClick="() => OpenQuestions(context)">Câu hỏi</Button>
+                </SpaceItem>
+                <SpaceItem>
+                    <Button Size="ButtonSize.Small" Icon="edit" OnClick="() => OpenEditTest(context)">Sửa</Button>
+                </SpaceItem>
+                <SpaceItem>
+                    <Button Size="ButtonSize.Small" Danger Icon="delete" OnClick="() => DeleteTest(context.Id)">Xoá</Button>
+                </SpaceItem>
+            </Space>
+        </ActionColumn>
+    </Table>
+</div>
 
+<!-- Drawer: Thêm/Sửa đề thi -->
+<Drawer Visible="_testDrawerOpen"
+        Title="@(_editingTest.Id == 0 ? "Thêm đề thi" : "Sửa đề thi")"
+        Width="480"
+        OnClose="CloseTestDrawer">
+    <Form Model="_editingTest" OnFinish="SaveTest" LabelColSpan="8" WrapperColSpan="16">
+        <FormItem Label="Tiêu đề" Required>
+            <Input @bind-Value="_editingTest.Title" Placeholder="Nhập tiêu đề đề thi" />
+        </FormItem>
+        <FormItem Label="Thời gian (phút)" Required>
+            <AntDesign.InputNumber @bind-Value="_editingTest.Duration" Min="1" Max="999" Style="width:100%" />
+        </FormItem>
+        <FormItem Label="Loại đề thi">
+            <Select TItem="string" TItemValue="string" @bind-Value="_catIdStr" AllowClear Placeholder="Chọn loại đề">
+                @foreach (var cat in _categories)
+                {
+                    <SelectOption TItemValue="string" TItem="string" Value="@cat.Id.ToString()" Label="@cat.Name" />
+                }
+            </Select>
+        </FormItem>
+        <FormItem Label="Trạng thái">
+            <Select TItem="TestStatus" TItemValue="TestStatus" @bind-Value="_editingTest.Status">
+                <SelectOption TItemValue="TestStatus" TItem="TestStatus" Value="TestStatus.Active" Label="Hoạt động" />
+                <SelectOption TItemValue="TestStatus" TItem="TestStatus" Value="TestStatus.Inactive" Label="Ngưng hoạt động" />
+                <SelectOption TItemValue="TestStatus" TItem="TestStatus" Value="TestStatus.Draft" Label="Nháp" />
+            </Select>
+        </FormItem>
+        <FormItem Label="Audio nghe (bài thi)">
+            @if (!string.IsNullOrEmpty(_editingTest.ListeningAudio))
+            {
+                <audio controls src="@_editingTest.ListeningAudio" style="width:100%;margin-bottom:6px" />
+            }
+            <InputFile OnChange="OnListeningAudioUpload" accept="audio/*" />
+        </FormItem>
+        <FormItem WrapperColOffset="8" WrapperColSpan="16">
+            <Button Type="ButtonType.Primary" HtmlType="submit" Loading="_saving">Lưu</Button>
+            <Button Style="margin-left:8px" OnClick="CloseTestDrawer">Huỷ</Button>
+        </FormItem>
+    </Form>
+</Drawer>
 
+<!-- Drawer: Danh sách câu hỏi + Form thêm/sửa -->
+<Drawer Visible="_questionDrawerOpen"
+        Title="@($"Câu hỏi — {_selectedTest?.Title}")"
+        Width="900"
+        OnClose="CloseQuestionDrawer">
+
+    @if (!_showQuestionForm)
+    {
+        <div style="margin-bottom:12px">
+            <Button Type="ButtonType.Primary" Icon="plus" OnClick="OpenAddQuestion">Thêm câu hỏi</Button>
+        </div>
+        <Table DataSource="_questions" TItem="QuestionViewModel" Size="TableSize.Small" Bordered>
+            <PropertyColumn Property="c => c.OrderNumber" Title="#" Width="45" />
+            <PropertyColumn Property="c => c.Content" Title="Nội dung câu hỏi" Ellipsis />
+            <ActionColumn Title="Đ/A đúng" Width="90">
+                <Tag Color="@("success")">@context.CorrectAnswer</Tag>
+            </ActionColumn>
+            <ActionColumn Title="File" Width="80">
+                @if (!string.IsNullOrEmpty(context.Image)) { <Icon Type="picture" Theme="IconThemeType.Outline" /> }
+                @if (!string.IsNullOrEmpty(context.Audio)) { <Icon Type="sound" Theme="IconThemeType.Outline" Style="margin-left:4px" /> }
+            </ActionColumn>
+            <ActionColumn Title="Thao tác" Width="140">
+                <Space>
+                    <SpaceItem>
+                        <Button Size="ButtonSize.Small" Icon="edit" OnClick="() => OpenEditQuestion(context)">Sửa</Button>
+                    </SpaceItem>
+                    <SpaceItem>
+                        <Button Size="ButtonSize.Small" Danger OnClick="() => DeleteQuestion(context.Id)">Xoá</Button>
+                    </SpaceItem>
+                </Space>
+            </ActionColumn>
+        </Table>
+    }
+    else
+    {
+        <!-- Question Add/Edit Form -->
+        <div style="margin-bottom:12px">
+            <Button OnClick="() => _showQuestionForm = false">← Quay lại danh sách</Button>
+        </div>
+        <Form Model="_editingQuestion" OnFinish="SaveQuestion" Layout="@FormLayout.Vertical">
+            <FormItem Label="Nội dung câu hỏi" Required>
+                <TextArea @bind-Value="_editingQuestion.Content" Rows="3" />
+            </FormItem>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+                <FormItem Label="Đáp án A">
+                    <Input @bind-Value="_editingQuestion.Answer1" Placeholder="Đáp án A" />
+                </FormItem>
+                <FormItem Label="Đáp án B">
+                    <Input @bind-Value="_editingQuestion.Answer2" Placeholder="Đáp án B" />
+                </FormItem>
+                <FormItem Label="Đáp án C">
+                    <Input @bind-Value="_editingQuestion.Answer3" Placeholder="Đáp án C" />
+                </FormItem>
+                <FormItem Label="Đáp án D">
+                    <Input @bind-Value="_editingQuestion.Answer4" Placeholder="Đáp án D" />
+                </FormItem>
+            </div>
+            <FormItem Label="Đáp án đúng" Required>
+                <Select TItem="string" TItemValue="string" @bind-Value="_editingQuestion.CorrectAnswer">
+                    <SelectOption TItemValue="string" TItem="string" Value='"A"' Label="A" />
+                    <SelectOption TItemValue="string" TItem="string" Value='"B"' Label="B" />
+                    <SelectOption TItemValue="string" TItem="string" Value='"C"' Label="C" />
+                    <SelectOption TItemValue="string" TItem="string" Value='"D"' Label="D" />
+                </Select>
+            </FormItem>
+            <FormItem Label="Số thứ tự">
+                <AntDesign.InputNumber @bind-Value="_editingQuestion.OrderNumber" Min="1" Style="width:160px" />
+            </FormItem>
+            <FormItem Label="Ảnh câu hỏi">
+                @if (!string.IsNullOrEmpty(_editingQuestion.Image))
+                {
+                    <img src="@_editingQuestion.Image" alt="img"
+                         style="max-width:260px;max-height:180px;display:block;margin-bottom:8px;border-radius:4px" />
+                }
+                <InputFile OnChange="OnImageUpload" accept="image/*" />
+            </FormItem>
+            <FormItem Label="Audio câu hỏi">
+                @if (!string.IsNullOrEmpty(_editingQuestion.Audio))
+                {
+                    <audio controls src="@_editingQuestion.Audio" style="width:100%;margin-bottom:8px" />
+                }
+                <InputFile OnChange="OnQuestionAudioUpload" accept="audio/*" />
+            </FormItem>
+            <FormItem Label="Transcript">
+                <TextArea @bind-Value="_editingQuestion.Transcript" Rows="2" Placeholder="Phần transcript (nếu có)" />
+            </FormItem>
+            <FormItem>
+                <Button Type="ButtonType.Primary" HtmlType="submit" Loading="_savingQ">Lưu câu hỏi</Button>
+                <Button Style="margin-left:8px" OnClick="() => _showQuestionForm = false">Huỷ</Button>
+            </FormItem>
+        </Form>
+    }
+</Drawer>
 
 @code {
-    IEnumerable<Exam> exams = new List<Exam>();
+    private List<TestViewModel> _tests = new();
+    private List<TestCategoryViewModel> _categories = new();
+    private List<QuestionViewModel> _questions = new();
+    private bool _loading = true;
+    private bool _saving;
+    private bool _savingQ;
+
+    private bool _testDrawerOpen;
+    private TestEditModel _editingTest = new();
+    private string _catIdStr = "";
+
+    private bool _questionDrawerOpen;
+    private bool _showQuestionForm;
+    private TestViewModel? _selectedTest;
+    private QuestionEditModel _editingQuestion = new();
 
     protected override async Task OnInitializedAsync()
     {
-        exams = await ExamRepository.GetAllAsync();
+        _categories = (await TestService.GetCategoriesAsync()).ToList();
+        _tests = (await TestService.GetAllAsync()).ToList();
+        _loading = false;
     }
 
-    void EditDetail()
+    private void OpenAddTest()
     {
-        
+        _editingTest = new TestEditModel { Status = TestStatus.Active, Duration = 120 };
+        _catIdStr = "";
+        _testDrawerOpen = true;
+    }
+
+    private void OpenEditTest(TestViewModel t)
+    {
+        _editingTest = new TestEditModel
+        {
+            Id = t.Id,
+            Title = t.Title,
+            Duration = t.Duration,
+            TotalQuestions = t.TotalQuestions,
+            Status = t.Status,
+            ListeningAudio = t.ListeningAudio,
+            TestCategoryId = t.TestCategoryId
+        };
+        _catIdStr = t.TestCategoryId?.ToString() ?? "";
+        _testDrawerOpen = true;
+    }
+
+    private void CloseTestDrawer() => _testDrawerOpen = false;
+
+    private async Task SaveTest()
+    {
+        _saving = true;
+        try
+        {
+            _editingTest.TestCategoryId = string.IsNullOrEmpty(_catIdStr) ? null : long.Parse(_catIdStr);
+            if (_editingTest.Id == 0)
+                await TestService.AddAsync(_editingTest);
+            else
+                await TestService.UpdateAsync(_editingTest);
+            _tests = (await TestService.GetAllAsync()).ToList();
+            _testDrawerOpen = false;
+            await Message.SuccessAsync("Lưu đề thi thành công");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi: {ex.Message}");
+        }
+        finally { _saving = false; }
+    }
+
+    private async Task DeleteTest(long id)
+    {
+        try
+        {
+            // Show confirmation modal using ModalService
+            var okText = "Xoá";
+            var cancelText = "Huỷ";
+            var confirmed = await Modal.ConfirmAsync(new ConfirmOptions
+            {
+                Title = "Xác nhận xoá",
+                Content = "Bạn có chắc chắn muốn xoá đề thi này? Hành động này không thể hoàn tác.",
+                OkText = okText,
+                CancelText = cancelText,
+                OkButtonProps = new ButtonProps { Danger = true }
+            });
+
+            if (!confirmed)
+                return;
+
+            await TestService.DeleteAsync(id);
+            _tests = (await TestService.GetAllAsync()).ToList();
+            await Message.SuccessAsync("Đã xoá đề thi thành công");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi khi xoá đề thi: {ex.Message}");
+        }
+    }
+
+    private async Task OpenQuestions(TestViewModel t)
+    {
+        _selectedTest = t;
+        _showQuestionForm = false;
+        _questions = (await TestService.GetQuestionsAsync(t.Id)).OrderBy(q => q.OrderNumber).ToList();
+        _questionDrawerOpen = true;
+    }
+
+    private void CloseQuestionDrawer()
+    {
+        _questionDrawerOpen = false;
+        _showQuestionForm = false;
+    }
+
+    private void OpenAddQuestion()
+    {
+        _editingQuestion = new QuestionEditModel
+        {
+            TestId = _selectedTest!.Id,
+            OrderNumber = _questions.Count + 1,
+            CorrectAnswer = "A"
+        };
+        _showQuestionForm = true;
+    }
+
+    private void OpenEditQuestion(QuestionViewModel q)
+    {
+        _editingQuestion = new QuestionEditModel
+        {
+            Id = q.Id,
+            Content = q.Content ?? "",
+            Answer1 = q.Answer1,
+            Answer2 = q.Answer2,
+            Answer3 = q.Answer3,
+            Answer4 = q.Answer4,
+            CorrectAnswer = q.CorrectAnswer ?? "A",
+            Audio = q.Audio,
+            Image = q.Image,
+            Transcript = q.Transcript,
+            OrderNumber = q.OrderNumber,
+            TestId = _selectedTest!.Id
+        };
+        _showQuestionForm = true;
+    }
+
+    private async Task SaveQuestion()
+    {
+        _savingQ = true;
+        try
+        {
+            if (_editingQuestion.Id == 0)
+                await TestService.AddQuestionAsync(_editingQuestion);
+            else
+                await TestService.UpdateQuestionAsync(_editingQuestion);
+            _questions = (await TestService.GetQuestionsAsync(_selectedTest!.Id)).OrderBy(q => q.OrderNumber).ToList();
+            _showQuestionForm = false;
+            await Message.SuccessAsync("Lưu câu hỏi thành công");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi: {ex.Message}");
+        }
+        finally { _savingQ = false; }
+    }
+
+    private async Task DeleteQuestion(long id)
+    {
+        try
+        {
+            // Show confirmation modal using ModalService
+            var okText = "Xoá";
+            var cancelText = "Huỷ";
+            var confirmed = await Modal.ConfirmAsync(new ConfirmOptions
+            {
+                Title = "Xác nhận xoá",
+                Content = "Bạn có chắc chắn muốn xoá câu hỏi này? Hành động này không thể hoàn tác.",
+                OkText = okText,
+                CancelText = cancelText,
+                OkButtonProps = new ButtonProps { Danger = true }
+            });
+
+            if (!confirmed)
+                return;
+
+            await TestService.DeleteQuestionAsync(id);
+            _questions = (await TestService.GetQuestionsAsync(_selectedTest!.Id)).OrderBy(q => q.OrderNumber).ToList();
+            await Message.SuccessAsync("Đã xoá câu hỏi thành công");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi khi xoá câu hỏi: {ex.Message}");
+        }
+    }
+
+    private async Task OnListeningAudioUpload(InputFileChangeEventArgs e)
+    {
+        _editingTest.ListeningAudio = await SaveUploadedFile(e.File, "audio");
+    }
+
+    private async Task OnImageUpload(InputFileChangeEventArgs e)
+    {
+        _editingQuestion.Image = await SaveUploadedFile(e.File, "images");
+    }
+
+    private async Task OnQuestionAudioUpload(InputFileChangeEventArgs e)
+    {
+        _editingQuestion.Audio = await SaveUploadedFile(e.File, "audio");
+    }
+
+    private async Task<string> SaveUploadedFile(IBrowserFile file, string folder)
+    {
+        var webRoot = Env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        var dir = Path.Combine(webRoot, "uploads", folder);
+        Directory.CreateDirectory(dir);
+        var ext = Path.GetExtension(file.Name);
+        var fileName = $"{Guid.NewGuid()}{ext}";
+        var fullPath = Path.Combine(dir, fileName);
+        const long maxSize = 50L * 1024 * 1024;
+        await using var fs = new FileStream(fullPath, FileMode.Create);
+        await file.OpenReadStream(maxSize).CopyToAsync(fs);
+        return $"/uploads/{folder}/{fileName}";
     }
 }

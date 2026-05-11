@@ -15,7 +15,7 @@ namespace CoreLTToeic.Application.Interfaces.Pattern
         void UpdateRange(IEnumerable<T> entities);
         void Remove(T entity);
         void RemoveRange(IEnumerable<T> entities);
-        IEnumerable<T> Find(Expression<Func<T, bool>> expression);
+        IQueryable<T> Find(Expression<Func<T, bool>> expression);
         void SaveChanges();
         Task SaveChangesAsync();
         Task<IEnumerable<T>> GetAllAsync();

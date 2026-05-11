@@ -43,7 +43,7 @@ namespace CoreLTToeic.Infrastructure.Pattern
             _context.Set<T>().RemoveRange(entities);
         }
 
-        public IEnumerable<T> Find(Expression<Func<T, bool>> expression)
+        public IQueryable<T> Find(Expression<Func<T, bool>> expression)
         {
             return Query.Where(expression);
         }

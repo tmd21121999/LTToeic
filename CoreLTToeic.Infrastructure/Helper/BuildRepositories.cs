@@ -1,4 +1,4 @@
-﻿using CoreLTToeic.Application.Business;
+using CoreLTToeic.Application.Business;
 using CoreLTToeic.Application.Interfaces;
 using CoreLTToeic.Application.Interfaces.IRepository;
 using CoreLTToeic.Infrastructure.Repositories;
@@ -10,9 +10,12 @@ namespace CoreLTToeic.Infrastructure.Helper
     {
         public static void AddRepository(this IServiceCollection services)
         {
-            services.AddScoped<IExamRepository, ExamRepository>();
             services.AddScoped<IEmailSender, SmtpEmailSender>();
             services.AddScoped<IAuthRepository, AuthRepository>();
+            services.AddScoped<ITestRepository, TestRepository>();
+            services.AddScoped<IQuestionRepository, QuestionRepository>();
+            services.AddScoped<ITestCategoryRepository, TestCategoryRepository>();
+            services.AddScoped<IUserResultRepository, UserResultRepository>();
         }
     }
 }

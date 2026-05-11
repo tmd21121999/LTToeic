@@ -1,64 +1,91 @@
-﻿@page "/"
-@using AntDesign
-@using CoreLTToeic.Application.Models.EditModels
-@using CoreLTToeic.Application.Models.ViewModels
-@inject CoreLTToeic.Application.Interfaces.IService.IExamService ExamService
+@page "/"
+@inject ITestService TestService
+@inject NavigationManager Nav
 
-<PageTitle>Home</PageTitle>
+<div class="test-library-page">
+    <div class="library-header">
+        <h2 class="library-title">Thư viện đề thi TOEIC</h2>
+        <p class="library-subtitle">Luyện tập với kho đề thi cập nhật liên tục theo định dạng mới nhất</p>
+        <div class="search-row">
+            <AntDesign.Input Placeholder="Nhập tên đề thi hoặc từ khóa..."
+                             @bind-Value="_searchText"
+                             Class="search-input" />
+            <Button Type="ButtonType.Primary" Icon="@("search")" Class="search-btn" OnClick="FilterTests">Tìm kiếm</Button>
+        </div>
+        <div class="filter-chips">
+            <button class="@GetChipClass(null)" @onclick='() => SetPartFilter(null)'>Tất cả bài thi</button>
+            @for (int i = 1; i <= 7; i++)
+            {
+                var part = i;
+                <button class="@GetChipClass(part)" @onclick='() => SetPartFilter(part)'>Part @part</button>
+            }
+        </div>
+    </div>
 
-<h1>Create new Exam</h1>
-
-<Form Model="@examModel" OnFinish="OnFinish">
-    <FormItem Label="Name">
-        <Input @bind-Value="examModel.Name" Placeholder="Enter exam name" />
-    </FormItem>
-
-    <FormItem Label="Description">
-        <Input @bind-Value="examModel.Description" Placeholder="Enter description" />
-    </FormItem>
-
-    <FormItem Label="LType">
-        <Input @bind-Value="examModel.LType" Placeholder="Enter LType" />
-    </FormItem>
-
-    <FormItem Label="Type">
-        <Input @bind-Value="examModel.Type" Placeholder="Enter Type" />
-    </FormItem>
-
-    <FormItem>
-        <Button Type="ButtonType.Primary" HtmlType="submit">Add Exam</Button>
-        <Button OnClick="ResetForm" Style="margin-left:8px;">Reset</Button>
-    </FormItem>
-</Form>
-
-@if (!string.IsNullOrEmpty(StatusMessage))
-{
-    <Alert Message="@StatusMessage" Type="@(IsError ? AlertType.Error : AlertType.Success)"  />
-}
+    @if (_loading)
+    {
+        <div class="loading-center"><Spin /></div>
+    }
+    else if (_filtered.Count == 0)
+    {
+        <div class="empty-state">
+            <p style="color:#5a7090;font-size:1rem">Không có đề thi nào</p>
+        </div>
+    }
+    else
+    {
+        <div class="test-grid">
+            @foreach (var test in _filtered)
+            {
+                <div class="test-card">
+                    <div class="test-card-icon">
+                        <Icon Type="@("file-text")" Theme="IconThemeType.Outline" />
+                    </div>
+                    <div class="test-card-info">
+                        <div class="test-card-title">@test.Title</div>
+                        <div class="test-card-meta">
+                            @test.Duration phút • @test.TotalQuestions câu hỏi • @test.AttemptCount lượt làm
+                        </div>
+                    </div>
+                    <Button Type="ButtonType.Primary" Class="btn-lam-bai"
+                            OnClick='() => Nav.NavigateTo($"/thi/{test.Id}")'>
+                        Làm bài
+                    </Button>
+                </div>
+            }
+        </div>
+    }
+</div>
 
 @code {
-    private ExamEditModel examModel = new();
-    private string StatusMessage = string.Empty;
-    private bool IsError;
+    private List<TestViewModel> _all = new();
+    private List<TestViewModel> _filtered = new();
+    private string _searchText = "";
+    private int? _partFilter = null;
+    private bool _loading = true;
 
-    private async Task OnFinish()
+    protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            await ExamService.AddAsync(examModel);
-            StatusMessage = "Exam added successfully.";
-            examModel = new ExamEditModel();
-        }
-        catch (Exception ex)
-        {
-            IsError = true;
-            StatusMessage = $"Failed to add exam: {ex.Message}";
-        }
+        var tests = await TestService.GetAllAsync();
+        _all = tests.ToList();
+        _filtered = _all;
+        _loading = false;
     }
 
-    private void ResetForm()
+    private void SetPartFilter(int? part)
     {
-        examModel = new ExamEditModel();
-        StatusMessage = string.Empty;
+        _partFilter = part;
+        FilterTests();
     }
+
+    private void FilterTests()
+    {
+        _filtered = _all
+            .Where(t => string.IsNullOrWhiteSpace(_searchText) ||
+                        t.Title.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    private string GetChipClass(int? part) =>
+        _partFilter == part ? "chip chip-active" : "chip";
 }

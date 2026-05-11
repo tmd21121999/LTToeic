@@ -1,24 +1,27 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Luyện thi tiếng anh Toeic</a>
-    </div>
+<div class="sidebar-brand">
+    <a href="/">LT TOEIC</a>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<nav class="sidebar-nav">
+    <div class="nav-section-label">Học viên</div>
+    <NavLink class="nav-item" href="/" Match="NavLinkMatch.All">
+        <Icon Type="@("home")" Theme="IconThemeType.Outline" />
+        <span>Đề thi Online</span>
+    </NavLink>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+    <div class="nav-section-label" style="margin-top:16px">Quản trị</div>
+    <NavLink class="nav-item" href="/admin/quan-li-de-thi">
+        <Icon Type="@("file-text")" Theme="IconThemeType.Outline" />
+        <span>Quản lý đề thi</span>
+    </NavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
-
+    <div class="nav-divider"></div>
+    <NavLink class="nav-item" href="/login">
+        <Icon Type="@("user")" Theme="IconThemeType.Outline" />
+        <span>Đăng nhập</span>
+    </NavLink>
+    <NavLink class="nav-item" href="/register">
+        <Icon Type="@("user-add")" Theme="IconThemeType.Outline" />
+        <span>Đăng ký</span>
+    </NavLink>
+</nav>
