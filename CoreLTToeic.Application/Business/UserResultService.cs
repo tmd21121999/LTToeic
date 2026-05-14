@@ -1,0 +1,143 @@
+using AutoMapper;
+using CoreLTToeic.Application.Interfaces.IRepository;
+using CoreLTToeic.Application.Interfaces.IService;
+using CoreLTToeic.Application.Models.EditModels;
+using CoreLTToeic.Application.Models.ViewModels;
+using CoreLTToeic.Domain.Entities;
+using CoreLTToeic.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
+
+namespace CoreLTToeic.Application.Business;
+
+public class UserResultService : IUserResultService
+{
+    private readonly IUserResultRepository _userResultRepo;
+    private readonly IQuestionRepository _questionRepo;
+    private readonly IPartRepository _partRepo;
+    private readonly IQuestionGroupRepository _groupRepo;
+    private readonly IMapper _mapper;
+
+    public UserResultService(
+        IUserResultRepository userResultRepo,
+        IQuestionRepository questionRepo,
+        IPartRepository partRepo,
+        IQuestionGroupRepository groupRepo,
+        IMapper mapper)
+    {
+        _userResultRepo = userResultRepo;
+        _questionRepo = questionRepo;
+        _partRepo = partRepo;
+        _groupRepo = groupRepo;
+        _mapper = mapper;
+    }
+
+    public async Task<long> SubmitTestAsync(UserResultEditModel model, int completionTimeSeconds)
+    {
+        try
+        {
+            // Build partId → partNum mapping
+            var parts = await _partRepo.GetByTestIdAsync(model.TestId);
+            var partNumById = parts.ToDictionary(p => p.Id, p => p.PartNum);
+
+            // Build groupId → partNum mapping (for questions belonging to groups)
+            var groups = await _groupRepo.GetByTestIdAsync(model.TestId);
+            var groupPartMap = groups
+                .Where(g => g.PartId.HasValue && partNumById.ContainsKey(g.PartId.Value))
+                .ToDictionary(g => g.Id, g => partNumById[g.PartId!.Value]);
+
+            // Build questionId → partNum & correctAnswer from all test questions
+            var allQuestions = await _questionRepo.GetByTestIdAsync(model.TestId);
+            var questionPartMap = new Dictionary<long, ToeicLRPart>();
+            var correctAnswerMap = new Dictionary<long, string?>();
+
+            foreach (var q in allQuestions)
+            {
+                correctAnswerMap[q.Id] = q.CorrectAnswer;
+
+                if (q.PartId.HasValue && partNumById.TryGetValue(q.PartId.Value, out var pn))
+                    questionPartMap[q.Id] = pn;
+                else if (q.QuestionGroupId.HasValue && groupPartMap.TryGetValue(q.QuestionGroupId.Value, out var gp))
+                    questionPartMap[q.Id] = gp;
+            }
+
+            int correct = 0, incorrect = 0, skipped = 0;
+            int listeningCorrects = 0, readingCorrects = 0;
+            int totalListening = 0, totalReading = 0;
+            var userAnswers = new List<UserAnswer>();
+
+            foreach (var answer in model.Answers)
+            {
+                correctAnswerMap.TryGetValue(answer.QuestionId, out var correctAns);
+                bool isSkipped = string.IsNullOrEmpty(answer.SelectedAnswer);
+                bool isCorrect = !isSkipped && answer.SelectedAnswer == correctAns;
+
+                if (isSkipped) skipped++;
+                else if (isCorrect) correct++;
+                else incorrect++;
+
+                if (questionPartMap.TryGetValue(answer.QuestionId, out var partNum))
+                {
+                    bool isListening = partNum <= ToeicLRPart.Part4;
+                    if (isListening) { totalListening++; if (isCorrect) listeningCorrects++; }
+                    else { totalReading++; if (isCorrect) readingCorrects++; }
+                }
+
+                userAnswers.Add(new UserAnswer
+                {
+                    QuestionId = answer.QuestionId,
+                    SelectedAnswer = answer.SelectedAnswer,
+                    IsCorrect = isCorrect
+                });
+            }
+
+            int listeningScore = totalListening > 0
+                ? (int)Math.Round((double)listeningCorrects / totalListening * 495) : 0;
+            int readingScore = totalReading > 0
+                ? (int)Math.Round((double)readingCorrects / totalReading * 495) : 0;
+
+            float accuracy = model.Answers.Count > 0
+                ? (float)correct / model.Answers.Count * 100 : 0;
+
+            var result = new UserResult
+            {
+                TestId = model.TestId,
+                UserId = model.UserId,
+                TestMode = model.TestMode,
+                CorrectAnswers = correct,
+                IncorrectAnswers = incorrect,
+                SkippedAnswers = skipped,
+                ListeningCorrects = listeningCorrects,
+                ReadingCorrects = readingCorrects,
+                ListeningScore = listeningScore,
+                ReadingScore = readingScore,
+                TotalScore = listeningScore + readingScore,
+                CompletionTime = completionTimeSeconds,
+                Accuracy = accuracy,
+                CompletedAt = DateTime.Now,
+                AttemptStatus = AttemptStatus.Completed,
+                UserAnswers = userAnswers
+            };
+
+            _userResultRepo.Add(result);
+            await _userResultRepo.SaveChangesAsync();
+
+            return result.Id;
+        }
+        catch (Exception ex)
+        {
+            throw new ApplicationException("An error occurred while submitting the test result.", ex);
+        }
+    }
+
+    public async Task<UserResultViewModel?> GetResultAsync(long resultId)
+    {
+        var result = await _userResultRepo.GetByIdWithAnswersAsync(resultId);
+        return result == null ? null : _mapper.Map<UserResultViewModel>(result);
+    }
+
+    public async Task<IEnumerable<UserResultViewModel>> GetByUserIdAsync(string userId)
+    {
+        var results = await _userResultRepo.GetByUserIdAsync(userId);
+        return _mapper.Map<IEnumerable<UserResultViewModel>>(results);
+    }
+}

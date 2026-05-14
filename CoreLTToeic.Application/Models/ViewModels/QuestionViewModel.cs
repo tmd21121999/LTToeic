@@ -15,5 +15,6 @@ namespace CoreLTToeic.Application.Models.ViewModels
         public int OrderNumber { get; set; }
         public long? PartId { get; set; }
         public long? TestId { get; set; }
+        public long? QuestionGroupId { get; set; }
     }
 }

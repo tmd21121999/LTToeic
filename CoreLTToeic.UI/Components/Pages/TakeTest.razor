@@ -1,0 +1,609 @@
+@page "/luyen-thi/{TestId:long}"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject ITestService TestService
+@inject IUserResultService UserResultService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject MessageService Message
+@inject IJSRuntime JS
+
+<PageTitle>@(_test?.Title ?? "Đang tải...")</PageTitle>
+
+@if (_loading)
+{
+    <div style="display:flex;align-items:center;justify-content:center;height:60vh">
+        <Spin Tip="Đang tải đề thi..." />
+    </div>
+}
+else if (_test == null)
+{
+    <div style="text-align:center;padding:48px 16px;color:#888">
+        <Icon Type="file-unknown" Style="font-size:48px;margin-bottom:12px" />
+        <p>Không tìm thấy đề thi</p>
+    </div>
+}
+else
+{
+    <div class="tt-root">
+        <!-- Top bar -->
+        <div class="tt-topbar">
+            <div class="tt-parts-nav">
+                @foreach (var part in _parts)
+                {
+                    <button class="tt-part-btn" @onclick="() => ScrollToPart(part.Id)">
+                        Part @((int)part.PartNum)
+                    </button>
+                }
+            </div>
+            <div class="tt-topbar-right">
+                @if (!_isViewResult)
+                {
+                    <div class="tt-timer @(_remainingSeconds <= 300 ? "tt-timer-urgent" : "")">
+                        <Icon Type="clock-circle" />
+                        @FormatTime(_remainingSeconds)
+                    </div>
+                    <Button Type="@ButtonType.Primary" Danger OnClick="ConfirmSubmit" Loading="_submitting">
+                        Nộp bài
+                    </Button>
+                }
+                else
+                {
+                    <Button Type="@ButtonType.Default" OnClick="@(() => Nav.NavigateTo("/luyen-thi"))">
+                        <Icon Type="arrow-left" /> Đề thi khác
+                    </Button>
+                }
+            </div>
+        </div>
+
+        <!-- Result banner -->
+        @if (_isViewResult && _result != null)
+        {
+            <div class="tt-result-banner">
+                <div class="tt-result-score">
+                    <span class="tt-score-total">@_result.TotalScore<span class="tt-score-max">/990</span></span>
+                    <span class="tt-score-label">Tổng điểm</span>
+                </div>
+                <div class="tt-result-details">
+                    <div class="tt-result-item">
+                        <span class="tt-result-val">@_result.ListeningScore</span>
+                        <span class="tt-result-key">Listening</span>
+                    </div>
+                    <div class="tt-result-divider"></div>
+                    <div class="tt-result-item">
+                        <span class="tt-result-val">@_result.ReadingScore</span>
+                        <span class="tt-result-key">Reading</span>
+                    </div>
+                    <div class="tt-result-divider"></div>
+                    <div class="tt-result-item tt-correct">
+                        <span class="tt-result-val">@_result.CorrectAnswers</span>
+                        <span class="tt-result-key">Đúng</span>
+                    </div>
+                    <div class="tt-result-divider"></div>
+                    <div class="tt-result-item tt-wrong">
+                        <span class="tt-result-val">@_result.IncorrectAnswers</span>
+                        <span class="tt-result-key">Sai</span>
+                    </div>
+                    <div class="tt-result-divider"></div>
+                    <div class="tt-result-item">
+                        <span class="tt-result-val">@_result.SkippedAnswers</span>
+                        <span class="tt-result-key">Bỏ qua</span>
+                    </div>
+                    <div class="tt-result-divider"></div>
+                    <div class="tt-result-item">
+                        <span class="tt-result-val">@_result.Accuracy.ToString("F1")%</span>
+                        <span class="tt-result-key">Chính xác</span>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Main content: questions + answer sheet -->
+        <div class="tt-body">
+            <div class="tt-questions">
+                @foreach (var part in _parts)
+                {
+                    var standalones = _standaloneQuestions
+                        .Where(q => q.PartId == part.Id)
+                        .ToList();
+                    var groups = _allGroups
+                        .Where(g => g.PartId == part.Id)
+                        .ToList();
+
+                    if (!standalones.Any() && !groups.Any()) continue;
+
+                    <TestPartSection
+                        Part="part"
+                        StandaloneQuestions="standalones"
+                        Groups="groups"
+                        QuestionNumberMap="_questionNumberMap"
+                        UserAnswers="_userAnswers"
+                        IsViewResult="_isViewResult"
+                        OnAnswerSelected="HandleAnswer" />
+                }
+            </div>
+
+            <div class="tt-sheet-col">
+                <TestAnswerSheet
+                    Parts="_parts"
+                    QuestionIndex="_questionIndex"
+                    PartQuestionIds="_partQuestionIds"
+                    UserAnswers="_userAnswers"
+                    IsViewResult="_isViewResult"
+                    CorrectAnswers="_correctAnswers"
+                    OnQuestionClicked="ScrollToQuestion" />
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .tt-root {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .tt-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: #fff;
+        border-bottom: 1px solid #e8e8e8;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 16px;
+        gap: 12px;
+        box-shadow: 0 2px 6px rgba(0,0,0,.06);
+    }
+
+    .tt-parts-nav {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .tt-part-btn {
+        padding: 4px 12px;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        background: #fafafa;
+        font-size: 13px;
+        cursor: pointer;
+        color: #333;
+        transition: border-color .15s, background .15s;
+    }
+
+    .tt-part-btn:hover {
+        border-color: #1677ff;
+        color: #1677ff;
+        background: #e6f4ff;
+    }
+
+    .tt-topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+    }
+
+    .tt-timer {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1677ff;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 90px;
+    }
+
+    .tt-timer.tt-timer-urgent {
+        color: #ff4d4f;
+        animation: tt-pulse 1s infinite;
+    }
+
+    @@keyframes tt-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .5; }
+    }
+
+    .tt-result-banner {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        background: linear-gradient(135deg, #1677ff 0%, #4096ff 100%);
+        color: #fff;
+        padding: 16px 24px;
+        border-bottom: 1px solid #d6e4ff;
+        flex-wrap: wrap;
+    }
+
+    .tt-result-score {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .tt-score-total {
+        font-size: 36px;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .tt-score-max {
+        font-size: 18px;
+        font-weight: 400;
+        opacity: .8;
+    }
+
+    .tt-score-label {
+        font-size: 11px;
+        opacity: .8;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-top: 2px;
+    }
+
+    .tt-result-details {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .tt-result-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .tt-result-val {
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .tt-result-key {
+        font-size: 11px;
+        opacity: .8;
+        margin-top: 2px;
+    }
+
+    .tt-result-item.tt-correct .tt-result-val { color: #b7eb8f; }
+    .tt-result-item.tt-wrong .tt-result-val { color: #ffa39e; }
+
+    .tt-result-divider {
+        width: 1px;
+        height: 36px;
+        background: rgba(255,255,255,.3);
+    }
+
+    .tt-body {
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        align-items: flex-start;
+        flex: 1;
+    }
+
+    .tt-questions {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tt-sheet-col {
+        width: 220px;
+        flex-shrink: 0;
+    }
+</style>
+
+@code {
+    [Parameter] public long TestId { get; set; }
+
+    private TestViewModel? _test;
+    private List<PartViewModel> _parts = [];
+    private List<QuestionViewModel> _standaloneQuestions = [];
+    private List<QuestionGroupViewModel> _allGroups = [];
+
+    private Dictionary<long, string> _userAnswers = new();
+    private Dictionary<long, int> _questionNumberMap = new();
+    private List<(long QuestionId, int Number)> _questionIndex = [];
+    private Dictionary<long, HashSet<long>> _partQuestionIds = new();
+    private Dictionary<long, string> _correctAnswers = new();
+    private Dictionary<long, long> _questionPartId = new(); // questionId → partId
+
+    private UserResultViewModel? _result;
+    private bool _isViewResult;
+    private bool _loading = true;
+    private bool _submitting;
+
+    private int _remainingSeconds;
+    private System.Threading.Timer? _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var testTask = TestService.GetByIdAsync(TestId);
+            var partsTask = TestService.GetPartsAsync(TestId);
+            var questionsTask = TestService.GetQuestionsAsync(TestId);
+            var groupsTask = TestService.GetQuestionGroupsAsync(TestId);
+
+            await Task.WhenAll(testTask, partsTask, questionsTask, groupsTask);
+
+            _test = await testTask;
+            if (_test == null) { _loading = false; return; }
+
+            _parts = (await partsTask).OrderBy(p => p.PartNum).ToList();
+            var allQuestions = (await questionsTask).ToList();
+            _allGroups = (await groupsTask).ToList();
+
+            // Standalone = questions not in any group
+            _standaloneQuestions = allQuestions.Where(q => q.QuestionGroupId == null).ToList();
+
+            BuildQuestionIndex(allQuestions);
+
+            _remainingSeconds = (_test.Duration > 0 ? _test.Duration : 120) * 60;
+            StartTimer();
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi tải đề thi: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void BuildQuestionIndex(List<QuestionViewModel> allQuestions)
+    {
+        _questionIndex = [];
+        _questionNumberMap = new();
+        _partQuestionIds = new();
+        _correctAnswers = new();
+        _questionPartId = new();
+
+        int counter = 1;
+
+        foreach (var part in _parts)
+        {
+            var partQIds = new HashSet<long>();
+
+            // Groups for this part, sorted by min question OrderNumber
+            var partGroups = _allGroups
+                .Where(g => g.PartId == part.Id)
+                .OrderBy(g => g.Questions.Count > 0 ? g.Questions.Min(q => q.OrderNumber) : int.MaxValue)
+                .ToList();
+
+            // Standalone questions for this part
+            var partStandalone = _standaloneQuestions
+                .Where(q => q.PartId == part.Id)
+                .OrderBy(q => q.OrderNumber)
+                .ToList();
+
+            // Build merged ordered list (group questions + standalone by OrderNumber)
+            // Group = gets the minOrderNumber of its children; standalone = their own OrderNumber
+            var allPartItems = new List<(int sortKey, long questionId, string? correctAnswer)>();
+
+            foreach (var g in partGroups)
+                foreach (var q in g.Questions.OrderBy(x => x.OrderNumber))
+                    allPartItems.Add((q.OrderNumber, q.Id, q.CorrectAnswer));
+
+            foreach (var q in partStandalone)
+                allPartItems.Add((q.OrderNumber, q.Id, q.CorrectAnswer));
+
+            foreach (var (_, qId, correctAns) in allPartItems.OrderBy(x => x.sortKey))
+            {
+                _questionIndex.Add((qId, counter));
+                _questionNumberMap[qId] = counter;
+                _questionPartId[qId] = part.Id;
+                partQIds.Add(qId);
+                if (!string.IsNullOrEmpty(correctAns))
+                    _correctAnswers[qId] = correctAns;
+                counter++;
+            }
+
+            _partQuestionIds[part.Id] = partQIds;
+        }
+    }
+
+    private void StartTimer()
+    {
+        _timer = new System.Threading.Timer(async _ =>
+        {
+            _remainingSeconds--;
+            if (_remainingSeconds <= 0)
+            {
+                _remainingSeconds = 0;
+                _timer?.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+                await InvokeAsync(AutoSubmit);
+            }
+            await InvokeAsync(StateHasChanged);
+        }, null, 1000, 1000);
+    }
+
+    private async Task AutoSubmit()
+    {
+        await Message.InfoAsync("Hết giờ! Bài làm đã được tự động nộp.");
+        await SubmitTest();
+    }
+
+    private async Task ConfirmSubmit()
+    {
+        var answered = _userAnswers.Count(kv => !string.IsNullOrEmpty(kv.Value));
+        var total = _questionIndex.Count;
+        var unanswered = total - answered;
+
+        if (unanswered > 0)
+        {
+            var confirmed = await JS.InvokeAsync<bool>("confirm",
+                $"Bạn còn {unanswered}/{total} câu chưa trả lời. Bạn có chắc muốn nộp bài không?");
+            if (!confirmed) return;
+        }
+
+        await SubmitTest();
+    }
+
+    private async Task SubmitTest()
+    {
+        if (_submitting) return;
+        _submitting = true;
+        _timer?.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirst(c =>
+                c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+
+            var completionTime = (_test!.Duration * 60) - _remainingSeconds;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                // Guest: tính kết quả locally, không lưu DB
+                _result = CalculateLocalResult(completionTime);
+                await SaveGuestResultToLocalStorage(_result);
+            }
+            else
+            {
+                // Đã đăng nhập: lưu DB
+                var model = new UserResultEditModel
+                {
+                    TestId = TestId,
+                    UserId = userId,
+                    TestMode = TestMode.Practice,
+                    Answers = _questionIndex.Select(qi => new UserAnswerEditModel
+                    {
+                        QuestionId = qi.QuestionId,
+                        SelectedAnswer = _userAnswers.GetValueOrDefault(qi.QuestionId)
+                    }).ToList()
+                };
+
+                var resultId = await UserResultService.SubmitTestAsync(model, completionTime);
+                _result = await UserResultService.GetResultAsync(resultId);
+            }
+
+            _isViewResult = true;
+            await Message.SuccessAsync("Nộp bài thành công!");
+            await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi nộp bài: {ex.Message}");
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    private UserResultViewModel CalculateLocalResult(int completionTime)
+    {
+        int correct = 0, incorrect = 0, skipped = 0;
+        int listeningCorrects = 0, readingCorrects = 0;
+        int totalListening = 0, totalReading = 0;
+
+        var partNumLookup = _parts.ToDictionary(p => p.Id, p => p.PartNum);
+        var answers = new List<UserAnswerViewModel>();
+
+        foreach (var (questionId, _) in _questionIndex)
+        {
+            var selected = _userAnswers.GetValueOrDefault(questionId);
+            var correctAns = _correctAnswers.GetValueOrDefault(questionId);
+
+            bool isSkipped = string.IsNullOrEmpty(selected);
+            bool isCorrect = !isSkipped && selected == correctAns;
+
+            if (isSkipped) skipped++;
+            else if (isCorrect) correct++;
+            else incorrect++;
+
+            if (_questionPartId.TryGetValue(questionId, out var partId) &&
+                partNumLookup.TryGetValue(partId, out var partNum))
+            {
+                bool isListening = partNum <= ToeicLRPart.Part4;
+                if (isListening) { totalListening++; if (isCorrect) listeningCorrects++; }
+                else { totalReading++; if (isCorrect) readingCorrects++; }
+            }
+
+            answers.Add(new UserAnswerViewModel
+            {
+                QuestionId = questionId,
+                SelectedAnswer = selected,
+                CorrectAnswer = correctAns,
+                IsCorrect = isCorrect
+            });
+        }
+
+        int listeningScore = totalListening > 0
+            ? (int)Math.Round((double)listeningCorrects / totalListening * 495) : 0;
+        int readingScore = totalReading > 0
+            ? (int)Math.Round((double)readingCorrects / totalReading * 495) : 0;
+
+        return new UserResultViewModel
+        {
+            CorrectAnswers = correct,
+            IncorrectAnswers = incorrect,
+            SkippedAnswers = skipped,
+            ListeningCorrects = listeningCorrects,
+            ReadingCorrects = readingCorrects,
+            ListeningScore = listeningScore,
+            ReadingScore = readingScore,
+            TotalScore = listeningScore + readingScore,
+            Accuracy = _questionIndex.Count > 0 ? (float)correct / _questionIndex.Count * 100 : 0,
+            CompletionTime = completionTime,
+            CompletedAt = DateTime.Now,
+            TestMode = TestMode.Practice,
+            TestTitle = _test?.Title ?? string.Empty,
+            Answers = answers
+        };
+    }
+
+    private async Task SaveGuestResultToLocalStorage(UserResultViewModel result)
+    {
+        try
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(result);
+            await JS.InvokeVoidAsync("localStorage.setItem", $"ltoeic_result_{TestId}", json);
+        }
+        catch
+        {
+            // localStorage không khả dụng (private browsing...) — bỏ qua
+        }
+    }
+
+    private void HandleAnswer((long QuestionId, string Answer) evt)
+    {
+        _userAnswers[evt.QuestionId] = evt.Answer;
+    }
+
+    private async Task ScrollToQuestion(int number)
+    {
+        await JS.InvokeVoidAsync("eval",
+            $"document.getElementById('question-{number}')?.scrollIntoView({{behavior:'smooth',block:'start'}})");
+    }
+
+    private async Task ScrollToPart(long partId)
+    {
+        await JS.InvokeVoidAsync("eval",
+            $"document.getElementById('part-{partId}')?.scrollIntoView({{behavior:'smooth',block:'start'}})");
+    }
+
+    private static string FormatTime(int seconds)
+    {
+        var h = seconds / 3600;
+        var m = (seconds % 3600) / 60;
+        var s = seconds % 60;
+        return h > 0
+            ? $"{h:D2}:{m:D2}:{s:D2}"
+            : $"{m:D2}:{s:D2}";
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

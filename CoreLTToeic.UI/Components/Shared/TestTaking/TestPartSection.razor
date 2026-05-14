@@ -1,0 +1,117 @@
+<div class="tps-section" id="part-@Part.Id">
+    <div class="tps-header">
+        <span class="tps-part-badge">PART @((int)Part.PartNum)</span>
+        @if (!string.IsNullOrWhiteSpace(Part.Content))
+        {
+            <div class="tps-directions">
+                <strong>Directions: </strong>@((MarkupString)Part.Content)
+            </div>
+        }
+    </div>
+
+    @foreach (var item in _orderedItems)
+    {
+        if (item.IsGroup && item.Group != null)
+        {
+            <TestQuestionGroupItem
+                Group="item.Group"
+                QuestionNumberMap="QuestionNumberMap"
+                UserAnswers="UserAnswers"
+                IsViewResult="IsViewResult"
+                OnAnswerSelected="OnAnswerSelected" />
+        }
+        else if (item.Question != null)
+        {
+            var num = QuestionNumberMap.GetValueOrDefault(item.Question.Id, 0);
+            <TestQuestionItem
+                Question="item.Question"
+                QuestionNumber="num"
+                SelectedAnswer="@(UserAnswers.GetValueOrDefault(item.Question.Id))"
+                IsViewResult="IsViewResult"
+                OnAnswerSelected="@(ans => HandleStandaloneAnswer(item.Question.Id, ans))" />
+        }
+    }
+</div>
+
+<style>
+    .tps-section {
+        margin-bottom: 28px;
+        scroll-margin-top: 60px;
+    }
+
+    .tps-header {
+        background: #f0f5ff;
+        border: 1px solid #d6e4ff;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 14px;
+    }
+
+    .tps-part-badge {
+        display: inline-block;
+        background: #1677ff;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        padding: 2px 10px;
+        border-radius: 12px;
+        margin-bottom: 6px;
+    }
+
+    .tps-directions {
+        font-size: 13px;
+        color: #444;
+        line-height: 1.6;
+        margin-top: 4px;
+    }
+</style>
+
+@code {
+    [Parameter, EditorRequired] public PartViewModel Part { get; set; } = null!;
+    [Parameter] public List<QuestionViewModel> StandaloneQuestions { get; set; } = [];
+    [Parameter] public List<QuestionGroupViewModel> Groups { get; set; } = [];
+    [Parameter] public Dictionary<long, int> QuestionNumberMap { get; set; } = [];
+    [Parameter] public Dictionary<long, string> UserAnswers { get; set; } = [];
+    [Parameter] public bool IsViewResult { get; set; }
+    [Parameter] public EventCallback<(long QuestionId, string Answer)> OnAnswerSelected { get; set; }
+
+    private List<PartItem> _orderedItems = [];
+
+    protected override void OnParametersSet()
+    {
+        _orderedItems = [];
+
+        // Assign sort keys: groups get the min OrderNumber of their child questions
+        var groupItems = Groups.Select(g => new PartItem
+        {
+            IsGroup = true,
+            Group = g,
+            SortKey = g.Questions.Count > 0
+                ? g.Questions.Min(q => q.OrderNumber)
+                : int.MaxValue
+        });
+
+        var questionItems = StandaloneQuestions.Select(q => new PartItem
+        {
+            IsGroup = false,
+            Question = q,
+            SortKey = q.OrderNumber
+        });
+
+        _orderedItems = groupItems.Concat(questionItems).OrderBy(x => x.SortKey).ToList();
+    }
+
+    private async Task HandleStandaloneAnswer(long questionId, string answer)
+    {
+        await OnAnswerSelected.InvokeAsync((questionId, answer));
+    }
+
+    private record PartItem
+    {
+        public bool IsGroup { get; init; }
+        public QuestionGroupViewModel? Group { get; init; }
+        public QuestionViewModel? Question { get; init; }
+        public int SortKey { get; init; }
+    }
+}

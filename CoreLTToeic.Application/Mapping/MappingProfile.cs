@@ -32,6 +32,13 @@ namespace CoreLTToeic.Application.Mapping
             CreateMap<PartEditModel, Part>();
 
             CreateMap<TestCategory, TestCategoryViewModel>();
+
+            CreateMap<UserAnswer, UserAnswerViewModel>()
+                .ForMember(d => d.CorrectAnswer, o => o.MapFrom(s => s.Question != null ? s.Question.CorrectAnswer : null));
+
+            CreateMap<UserResult, UserResultViewModel>()
+                .ForMember(d => d.TestTitle, o => o.MapFrom(s => s.Test != null ? s.Test.Title : string.Empty))
+                .ForMember(d => d.Answers, o => o.MapFrom(s => s.UserAnswers));
         }
     }
 }

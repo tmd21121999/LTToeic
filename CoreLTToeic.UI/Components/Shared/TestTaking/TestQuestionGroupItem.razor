@@ -1,0 +1,92 @@
+<div class="tqg-block">
+    @if (!string.IsNullOrEmpty(Group.Audio))
+    {
+        <div style="margin-bottom:10px">
+            <audio controls src="@Group.Audio" style="width:100%;height:32px" />
+        </div>
+    }
+
+    @if (Group.Images != null && Group.Images.Any(i => !string.IsNullOrEmpty(i)))
+    {
+        <div class="tqg-images">
+            @foreach (var img in Group.Images.Where(i => !string.IsNullOrEmpty(i)))
+            {
+                <img src="@img" alt="img" class="tqg-image" />
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Group.Content))
+    {
+        <div class="tqg-passage">@((MarkupString)Group.Content)</div>
+    }
+
+    <div class="tqg-questions">
+        @foreach (var q in Group.Questions.OrderBy(x => x.OrderNumber))
+        {
+            var num = QuestionNumberMap.GetValueOrDefault(q.Id, 0);
+            <TestQuestionItem
+                Question="q"
+                QuestionNumber="num"
+                SelectedAnswer="@(UserAnswers.GetValueOrDefault(q.Id))"
+                IsViewResult="IsViewResult"
+                OnAnswerSelected="@(ans => HandleAnswer(q.Id, ans))" />
+        }
+    </div>
+</div>
+
+<style>
+    .tqg-block {
+        border: 1px solid #e0e8ff;
+        border-radius: 10px;
+        background: #f7f9ff;
+        padding: 14px;
+        margin-bottom: 16px;
+    }
+
+    .tqg-images {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .tqg-image {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 6px;
+        object-fit: contain;
+    }
+
+    .tqg-passage {
+        font-size: 14px;
+        line-height: 1.75;
+        color: #333;
+        background: #fff;
+        border-left: 3px solid #1677ff;
+        padding: 10px 14px;
+        border-radius: 0 6px 6px 0;
+        margin-bottom: 14px;
+        max-height: 240px;
+        overflow-y: auto;
+    }
+
+    .tqg-questions {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+</style>
+
+@code {
+    [Parameter, EditorRequired] public QuestionGroupViewModel Group { get; set; } = null!;
+    [Parameter] public Dictionary<long, int> QuestionNumberMap { get; set; } = [];
+    [Parameter] public Dictionary<long, string> UserAnswers { get; set; } = [];
+    [Parameter] public bool IsViewResult { get; set; }
+    [Parameter] public EventCallback<(long QuestionId, string Answer)> OnAnswerSelected { get; set; }
+
+    private async Task HandleAnswer(long questionId, string answer)
+    {
+        await OnAnswerSelected.InvokeAsync((questionId, answer));
+    }
+}

@@ -1,0 +1,260 @@
+<div class="tq-item" id="question-@QuestionNumber">
+    <div class="tq-header">
+        <span class="tq-number">@QuestionNumber</span>
+        @if (!string.IsNullOrEmpty(Question.Audio))
+        {
+            <audio controls src="@Question.Audio" class="tq-audio" />
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(Question.Image))
+    {
+        <img src="@Question.Image" alt="img" class="tq-image" />
+    }
+
+    <div class="tq-content">
+        @if (!string.IsNullOrWhiteSpace(Question.Content))
+        {
+            @((MarkupString)Question.Content)
+        }
+    </div>
+
+    <div class="tq-options">
+        @foreach (var opt in _options)
+        {
+            var css = GetOptionCss(opt.Key);
+            <div class="tq-option @css" @onclick="() => SelectAnswer(opt.Key)">
+                <span class="tq-option-key">@opt.Key</span>
+                <span class="tq-option-text">
+                    @if (!string.IsNullOrWhiteSpace(opt.Value))
+                    {
+                        @opt.Value
+                    }
+                    else
+                    {
+                        <span style="color:#bbb;font-style:italic">...</span>
+                    }
+                </span>
+                @if (IsViewResult && opt.Key == Question.CorrectAnswer)
+                {
+                    <Icon Type="check-circle" Theme="IconThemeType.TwoTone" TwotoneColor="#52c41a" Style="margin-left:auto;flex-shrink:0" />
+                }
+                @if (IsViewResult && opt.Key == SelectedAnswer && opt.Key != Question.CorrectAnswer)
+                {
+                    <Icon Type="close-circle" Theme="IconThemeType.TwoTone" TwotoneColor="#ff4d4f" Style="margin-left:auto;flex-shrink:0" />
+                }
+            </div>
+        }
+    </div>
+
+    @if (IsViewResult && !string.IsNullOrWhiteSpace(Question.Transcript))
+    {
+        <div class="tq-transcript">
+            <div class="tq-transcript-toggle" @onclick="() => _transcriptOpen = !_transcriptOpen">
+                <Icon Type="@(_transcriptOpen ? "up" : "down")" />
+                Transcript / Giải thích
+            </div>
+            @if (_transcriptOpen)
+            {
+                <div class="tq-transcript-body">@Question.Transcript</div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .tq-item {
+        padding: 14px 16px;
+        border: 1px solid #f0f0f0;
+        border-radius: 8px;
+        background: #fff;
+        margin-bottom: 12px;
+        scroll-margin-top: 64px;
+    }
+
+    .tq-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .tq-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #1677ff;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .tq-audio {
+        flex: 1;
+        height: 32px;
+    }
+
+    .tq-image {
+        max-width: 100%;
+        max-height: 200px;
+        display: block;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        object-fit: contain;
+    }
+
+    .tq-content {
+        font-size: 15px;
+        line-height: 1.65;
+        color: #222;
+        margin-bottom: 12px;
+    }
+
+    .tq-options {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .tq-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border: 1.5px solid #e8e8e8;
+        border-radius: 6px;
+        background: #fafafa;
+        cursor: pointer;
+        transition: border-color .15s, background .15s;
+        user-select: none;
+    }
+
+    .tq-option:hover:not(.tq-option-disabled) {
+        border-color: #1677ff;
+        background: #e6f4ff;
+    }
+
+    .tq-option-disabled {
+        cursor: default;
+    }
+
+    .tq-option.tq-selected {
+        border-color: #1677ff;
+        background: #e6f4ff;
+    }
+
+    .tq-option.tq-correct {
+        border-color: #52c41a;
+        background: #f6ffed;
+    }
+
+    .tq-option.tq-wrong {
+        border-color: #ff4d4f;
+        background: #fff2f0;
+    }
+
+    .tq-option-key {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 1.5px solid #d9d9d9;
+        font-size: 12px;
+        font-weight: 600;
+        flex-shrink: 0;
+        color: #555;
+        transition: border-color .15s, color .15s;
+    }
+
+    .tq-option.tq-selected .tq-option-key {
+        border-color: #1677ff;
+        color: #1677ff;
+    }
+
+    .tq-option.tq-correct .tq-option-key {
+        border-color: #52c41a;
+        color: #52c41a;
+    }
+
+    .tq-option.tq-wrong .tq-option-key {
+        border-color: #ff4d4f;
+        color: #ff4d4f;
+    }
+
+    .tq-option-text {
+        font-size: 14px;
+        color: #333;
+        flex: 1;
+    }
+
+    .tq-transcript {
+        margin-top: 10px;
+        border-top: 1px dashed #e8e8e8;
+        padding-top: 8px;
+    }
+
+    .tq-transcript-toggle {
+        font-size: 13px;
+        font-weight: 600;
+        color: #555;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        user-select: none;
+    }
+
+    .tq-transcript-toggle:hover { color: #1677ff; }
+
+    .tq-transcript-body {
+        margin-top: 8px;
+        font-size: 13px;
+        color: #555;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        background: #fafafa;
+        padding: 8px 12px;
+        border-radius: 4px;
+    }
+</style>
+
+@code {
+    [Parameter, EditorRequired] public QuestionViewModel Question { get; set; } = null!;
+    [Parameter] public int QuestionNumber { get; set; }
+    [Parameter] public string? SelectedAnswer { get; set; }
+    [Parameter] public bool IsViewResult { get; set; }
+    [Parameter] public EventCallback<string> OnAnswerSelected { get; set; }
+
+    private bool _transcriptOpen;
+
+    private List<KeyValuePair<string, string?>> _options =>
+    [
+        new("A", Question.Answer1),
+        new("B", Question.Answer2),
+        new("C", Question.Answer3),
+        new("D", Question.Answer4),
+    ];
+
+    private string GetOptionCss(string key)
+    {
+        if (IsViewResult)
+        {
+            if (key == Question.CorrectAnswer) return "tq-correct tq-option-disabled";
+            if (key == SelectedAnswer) return "tq-wrong tq-option-disabled";
+            return "tq-option-disabled";
+        }
+        return key == SelectedAnswer ? "tq-selected" : string.Empty;
+    }
+
+    private async Task SelectAnswer(string key)
+    {
+        if (IsViewResult) return;
+        await OnAnswerSelected.InvokeAsync(key);
+    }
+}

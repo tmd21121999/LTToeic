@@ -1,0 +1,171 @@
+<div class="tas-panel">
+    <div class="tas-title">PHIẾU TRẢ LỜI</div>
+
+    @if (IsViewResult)
+    {
+        <div class="tas-legend">
+            <span class="tas-dot tas-dot-correct"></span><span>Đúng</span>
+            <span class="tas-dot tas-dot-wrong"></span><span>Sai</span>
+            <span class="tas-dot tas-dot-skipped"></span><span>Bỏ qua</span>
+        </div>
+    }
+    else
+    {
+        <div class="tas-legend">
+            <span class="tas-dot tas-dot-answered"></span><span>Đã chọn</span>
+            <span class="tas-dot tas-dot-skipped"></span><span>Chưa chọn</span>
+        </div>
+    }
+
+    @foreach (var part in Parts)
+    {
+        var partQuestions = QuestionIndex
+            .Where(q => PartQuestionIds.GetValueOrDefault(part.Id)?.Contains(q.QuestionId) == true)
+            .OrderBy(q => q.Number)
+            .ToList();
+
+        if (!partQuestions.Any()) continue;
+
+        <div class="tas-part-block">
+            <div class="tas-part-label">Part @((int)part.PartNum)</div>
+            <div class="tas-bubbles">
+                @foreach (var item in partQuestions)
+                {
+                    var css = GetBubbleCss(item.QuestionId);
+                    <div class="tas-bubble @css" title="Câu @item.Number"
+                         @onclick="() => ScrollToQuestion(item.Number)">
+                        @item.Number
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .tas-panel {
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        border-radius: 8px;
+        padding: 14px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.07);
+        position: sticky;
+        top: 56px;
+        max-height: calc(100vh - 80px);
+        overflow-y: auto;
+    }
+
+    .tas-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .tas-legend {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        color: #666;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+
+    .tas-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+
+    .tas-dot-answered { background: #1677ff; }
+    .tas-dot-correct { background: #52c41a; }
+    .tas-dot-wrong { background: #ff4d4f; }
+    .tas-dot-skipped { background: #d9d9d9; }
+
+    .tas-part-block {
+        margin-bottom: 14px;
+    }
+
+    .tas-part-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #1677ff;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: 6px;
+    }
+
+    .tas-bubbles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .tas-bubble {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        background: #f0f0f0;
+        color: #666;
+        transition: transform .1s;
+        user-select: none;
+    }
+
+    .tas-bubble:hover { transform: scale(1.15); }
+
+    .tas-bubble.tas-answered {
+        background: #1677ff;
+        color: #fff;
+    }
+
+    .tas-bubble.tas-bubble-correct {
+        background: #52c41a;
+        color: #fff;
+    }
+
+    .tas-bubble.tas-bubble-wrong {
+        background: #ff4d4f;
+        color: #fff;
+    }
+</style>
+
+@code {
+    [Parameter] public List<PartViewModel> Parts { get; set; } = [];
+    [Parameter] public List<(long QuestionId, int Number)> QuestionIndex { get; set; } = [];
+    [Parameter] public Dictionary<long, HashSet<long>> PartQuestionIds { get; set; } = [];
+    [Parameter] public Dictionary<long, string> UserAnswers { get; set; } = [];
+    [Parameter] public bool IsViewResult { get; set; }
+    [Parameter] public Dictionary<long, string> CorrectAnswers { get; set; } = [];
+    [Parameter] public EventCallback<int> OnQuestionClicked { get; set; }
+
+    private string GetBubbleCss(long questionId)
+    {
+        if (IsViewResult)
+        {
+            var selected = UserAnswers.GetValueOrDefault(questionId);
+            var correct = CorrectAnswers.GetValueOrDefault(questionId);
+            if (string.IsNullOrEmpty(selected)) return string.Empty;
+            return selected == correct ? "tas-bubble-correct" : "tas-bubble-wrong";
+        }
+        return UserAnswers.ContainsKey(questionId) && !string.IsNullOrEmpty(UserAnswers[questionId])
+            ? "tas-answered"
+            : string.Empty;
+    }
+
+    private async Task ScrollToQuestion(int number)
+    {
+        await OnQuestionClicked.InvokeAsync(number);
+    }
+}

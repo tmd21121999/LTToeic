@@ -1,0 +1,122 @@
+@page "/luyen-thi"
+@rendermode InteractiveServer
+@inject ITestService TestService
+@inject NavigationManager Nav
+
+<PageTitle>Đề thi Online - LT TOEIC</PageTitle>
+
+<div style="max-width:900px;margin:0 auto;padding:24px 16px">
+    <h2 style="font-size:22px;font-weight:700;margin-bottom:4px">Đề thi Online</h2>
+    <p style="color:#888;margin-bottom:20px">Chọn đề thi để bắt đầu luyện tập</p>
+
+    @if (_loading)
+    {
+        <Spin Tip="Đang tải..." />
+    }
+    else if (!_tests.Any())
+    {
+        <div style="text-align:center;padding:32px;color:#aaa">Chưa có đề thi nào</div>
+    }
+    else
+    {
+        <div class="tl-grid">
+            @foreach (var test in _tests)
+            {
+                <div class="tl-card">
+                    <div class="tl-card-title">@test.Title</div>
+                    <div class="tl-card-meta">
+                        @if (!string.IsNullOrEmpty(test.CategoryName))
+                        {
+                            <Tag Color="@("blue")">@test.CategoryName</Tag>
+                        }
+                        <span class="tl-meta-item">
+                            <Icon Type="clock-circle" />
+                            @test.Duration phút
+                        </span>
+                        <span class="tl-meta-item">
+                            <Icon Type="ordered-list" />
+                            @test.TotalQuestions câu
+                        </span>
+                    </div>
+                    <Button Type="@ButtonType.Primary" Block OnClick="() => StartTest(test.Id)">
+                        Bắt đầu thi
+                    </Button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .tl-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    .tl-card {
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        border-radius: 10px;
+        padding: 18px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.06);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: box-shadow .2s;
+    }
+
+    .tl-card:hover {
+        box-shadow: 0 4px 16px rgba(22,119,255,.15);
+        border-color: #91caff;
+    }
+
+    .tl-card-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #222;
+        line-height: 1.4;
+    }
+
+    .tl-card-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .tl-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        color: #666;
+    }
+</style>
+
+@code {
+    private List<TestViewModel> _tests = [];
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var all = await TestService.GetAllAsync();
+            _tests = all.Where(t => t.Status == TestStatus.Active).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi tải danh sách đề thi: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void StartTest(long testId)
+    {
+        Nav.NavigateTo($"/luyen-thi/{testId}");
+    }
+}
