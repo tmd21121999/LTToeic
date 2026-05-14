@@ -4,6 +4,7 @@ using CoreLTToeic.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CoreLTToeic.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260514103546_AddToeicLRPartEnum")]
+    partial class AddToeicLRPartEnum
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -133,7 +136,7 @@ namespace CoreLTToeic.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ListeningScoreConversions", (string)null);
+                    b.ToTable("ListeningScoreConversions");
                 });
 
             modelBuilder.Entity("CoreLTToeic.Domain.Entities.Part", b =>
@@ -160,7 +163,7 @@ namespace CoreLTToeic.Infrastructure.Migrations
 
                     b.HasIndex("TestId");
 
-                    b.ToTable("Parts", (string)null);
+                    b.ToTable("Parts");
                 });
 
             modelBuilder.Entity("CoreLTToeic.Domain.Entities.Question", b =>
@@ -228,7 +231,7 @@ namespace CoreLTToeic.Infrastructure.Migrations
 
                     b.HasIndex("TestId");
 
-                    b.ToTable("Questions", (string)null);
+                    b.ToTable("Questions");
                 });
 
             modelBuilder.Entity("CoreLTToeic.Domain.Entities.QuestionGroup", b =>
@@ -265,7 +268,7 @@ namespace CoreLTToeic.Infrastructure.Migrations
 
                     b.HasIndex("TestId");
 
-                    b.ToTable("QuestionGroups", (string)null);
+                    b.ToTable("QuestionGroups");
                 });
 
             modelBuilder.Entity("CoreLTToeic.Domain.Entities.QuestionGroupImage", b =>
@@ -287,7 +290,7 @@ namespace CoreLTToeic.Infrastructure.Migrations
 
                     b.HasIndex("QuestionGroupId");
 
-                    b.ToTable("QuestionGroupImages", (string)null);
+                    b.ToTable("QuestionGroupImages");
                 });
 
             modelBuilder.Entity("CoreLTToeic.Domain.Entities.ReadingScoreConversion", b =>
@@ -306,7 +309,7 @@ namespace CoreLTToeic.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ReadingScoreConversions", (string)null);
+                    b.ToTable("ReadingScoreConversions");
                 });
 
             modelBuilder.Entity("CoreLTToeic.Domain.Entities.Test", b =>
@@ -340,7 +343,7 @@ namespace CoreLTToeic.Infrastructure.Migrations
 
                     b.HasIndex("TestCategoryId");
 
-                    b.ToTable("Tests", (string)null);
+                    b.ToTable("Tests");
                 });
 
             modelBuilder.Entity("CoreLTToeic.Domain.Entities.TestCategory", b =>
@@ -357,7 +360,7 @@ namespace CoreLTToeic.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TestCategories", (string)null);
+                    b.ToTable("TestCategories");
                 });
 
             modelBuilder.Entity("CoreLTToeic.Domain.Entities.UserAnswer", b =>
@@ -387,7 +390,7 @@ namespace CoreLTToeic.Infrastructure.Migrations
 
                     b.HasIndex("UserResultId");
 
-                    b.ToTable("UserAnswers", (string)null);
+                    b.ToTable("UserAnswers");
                 });
 
             modelBuilder.Entity("CoreLTToeic.Domain.Entities.UserResult", b =>
@@ -450,7 +453,7 @@ namespace CoreLTToeic.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserResults", (string)null);
+                    b.ToTable("UserResults");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

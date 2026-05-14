@@ -1,0 +1,160 @@
+@inject ITestService TestService
+@inject MessageService Message
+@inject ModalService Modal
+
+<div style="margin-bottom:12px">
+    <Button Type="ButtonType.Primary" Icon="plus" OnClick="OpenAddPart">Thêm Part</Button>
+</div>
+
+@if (_loading)
+{
+    <Spin />
+}
+else if (_parts.Count == 0)
+{
+    <div style="text-align:center;padding:24px;color:#999">
+        Chưa có Part nào. Hãy thêm Part trước khi tạo câu hỏi.
+    </div>
+}
+else
+{
+    <Table DataSource="_parts" TItem="PartViewModel" Size="TableSize.Small" Bordered>
+        <ActionColumn Title="Part" Width="100">
+            <Tag Color="@("blue")">Part @((int)context.PartNum)</Tag>
+        </ActionColumn>
+        <PropertyColumn Property="c => c.Content" Title="Mô tả" Ellipsis />
+        <ActionColumn Title="Câu hỏi đơn" Width="110">
+            <Tag>@context.QuestionCount câu</Tag>
+        </ActionColumn>
+        <ActionColumn Title="Nhóm câu hỏi" Width="120">
+            <Tag>@context.QuestionGroupCount nhóm</Tag>
+        </ActionColumn>
+        <ActionColumn Title="Thao tác" Width="130">
+            <Space>
+                <SpaceItem>
+                    <Button Size="ButtonSize.Small" Icon="edit" OnClick="() => OpenEditPart(context)">Sửa</Button>
+                </SpaceItem>
+                <SpaceItem>
+                    <Button Size="ButtonSize.Small" Danger Icon="delete" OnClick="() => DeletePart(context.Id)">Xoá</Button>
+                </SpaceItem>
+            </Space>
+        </ActionColumn>
+    </Table>
+}
+
+<!-- Modal thêm/sửa Part -->
+<Modal Visible="_modalOpen"
+       Title="@(_editingPart.Id == 0 ? "Thêm Part" : "Sửa Part")"
+       Width="480"
+       Footer="@null"
+       OnCancel="CloseModal">
+    <Form Model="_editingPart" OnFinish="SavePart" Layout="@FormLayout.Vertical">
+        <FormItem Label="Part" Required>
+            <Select TItem="ToeicLRPart" TItemValue="ToeicLRPart" @bind-Value="_editingPart.PartNum" Style="width:100%">
+                <SelectOption TItemValue="ToeicLRPart" TItem="ToeicLRPart" Value="ToeicLRPart.Part1" Label="Part 1" />
+                <SelectOption TItemValue="ToeicLRPart" TItem="ToeicLRPart" Value="ToeicLRPart.Part2" Label="Part 2" />
+                <SelectOption TItemValue="ToeicLRPart" TItem="ToeicLRPart" Value="ToeicLRPart.Part3" Label="Part 3" />
+                <SelectOption TItemValue="ToeicLRPart" TItem="ToeicLRPart" Value="ToeicLRPart.Part4" Label="Part 4" />
+                <SelectOption TItemValue="ToeicLRPart" TItem="ToeicLRPart" Value="ToeicLRPart.Part5" Label="Part 5" />
+                <SelectOption TItemValue="ToeicLRPart" TItem="ToeicLRPart" Value="ToeicLRPart.Part6" Label="Part 6" />
+                <SelectOption TItemValue="ToeicLRPart" TItem="ToeicLRPart" Value="ToeicLRPart.Part7" Label="Part 7" />
+            </Select>
+        </FormItem>
+        <FormItem Label="Mô tả (tuỳ chọn)">
+            <TextArea @bind-Value="_editingPart.Content" Rows="3" Placeholder="Mô tả nội dung Part này..." />
+        </FormItem>
+        <FormItem>
+            <Button Type="ButtonType.Primary" HtmlType="submit" Loading="_saving">Lưu</Button>
+            <Button Style="margin-left:8px" OnClick="CloseModal">Huỷ</Button>
+        </FormItem>
+    </Form>
+</Modal>
+
+@code {
+    [Parameter] public long TestId { get; set; }
+    [Parameter] public EventCallback OnPartsChanged { get; set; }
+
+    private List<PartViewModel> _parts = new();
+    private bool _loading = true;
+    private bool _modalOpen;
+    private bool _saving;
+    private PartEditModel _editingPart = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadParts();
+    }
+
+    private async Task LoadParts()
+    {
+        _loading = true;
+        _parts = (await TestService.GetPartsAsync(TestId)).ToList();
+        _loading = false;
+    }
+
+    private void OpenAddPart()
+    {
+        _editingPart = new PartEditModel { TestId = TestId };
+        _modalOpen = true;
+    }
+
+    private void OpenEditPart(PartViewModel p)
+    {
+        _editingPart = new PartEditModel
+        {
+            Id = p.Id,
+            PartNum = p.PartNum,
+            Content = p.Content,
+            TestId = TestId
+        };
+        _modalOpen = true;
+    }
+
+    private void CloseModal() => _modalOpen = false;
+
+    private async Task SavePart()
+    {
+        _saving = true;
+        try
+        {
+            if (_editingPart.Id == 0)
+                await TestService.AddPartAsync(_editingPart);
+            else
+                await TestService.UpdatePartAsync(_editingPart);
+            _modalOpen = false;
+            await Message.SuccessAsync("Lưu Part thành công");
+            await LoadParts();
+            await OnPartsChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi: {ex.Message}");
+        }
+        finally { _saving = false; }
+    }
+
+    private async Task DeletePart(long id)
+    {
+        var confirmed = await Modal.ConfirmAsync(new ConfirmOptions
+        {
+            Title = "Xác nhận xoá",
+            Content = "Xoá Part sẽ bỏ liên kết với các câu hỏi thuộc Part này. Bạn có chắc chắn?",
+            OkText = "Xoá",
+            CancelText = "Huỷ",
+            OkButtonProps = new ButtonProps { Danger = true }
+        });
+        if (!confirmed) return;
+
+        try
+        {
+            await TestService.DeletePartAsync(id);
+            await Message.SuccessAsync("Đã xoá Part thành công");
+            await LoadParts();
+            await OnPartsChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi khi xoá Part: {ex.Message}");
+        }
+    }
+}

@@ -2,6 +2,7 @@ using AutoMapper;
 using CoreLTToeic.Application.Models.EditModels;
 using CoreLTToeic.Application.Models.ViewModels;
 using CoreLTToeic.Domain.Entities;
+using CoreLTToeic.Domain.Enums;
 
 namespace CoreLTToeic.Application.Mapping
 {
@@ -19,10 +20,16 @@ namespace CoreLTToeic.Application.Mapping
 
             CreateMap<QuestionGroup, QuestionGroupViewModel>()
                 .ForMember(d => d.Images, o => o.MapFrom(s => s.Images.Select(i => i.Image).ToList()))
-                .ForMember(d => d.Questions, o => o.MapFrom(s => s.Questions));
+                .ForMember(d => d.Questions, o => o.MapFrom(s => s.Questions))
+                .ForMember(d => d.PartNum, o => o.MapFrom(s => s.Part != null ? (ToeicLRPart?)s.Part.PartNum : null));
             CreateMap<QuestionGroupEditModel, QuestionGroup>()
                 .ForMember(d => d.Images, o => o.Ignore())
                 .ForMember(d => d.Questions, o => o.Ignore());
+
+            CreateMap<Part, PartViewModel>()
+                .ForMember(d => d.QuestionCount, o => o.MapFrom(s => s.Questions.Count))
+                .ForMember(d => d.QuestionGroupCount, o => o.MapFrom(s => s.QuestionGroups.Count));
+            CreateMap<PartEditModel, Part>();
 
             CreateMap<TestCategory, TestCategoryViewModel>();
         }

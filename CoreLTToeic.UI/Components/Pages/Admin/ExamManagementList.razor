@@ -84,6 +84,13 @@
         Width="960"
         OnClose="CloseQuestionDrawer">
     <Tabs>
+        <TabPane Key="parts" Tab="Quản lý Part">
+            @if (_selectedTest != null)
+            {
+                <TestPartManager TestId="_selectedTest.Id" OnPartsChanged="OnPartsChanged" />
+            }
+        </TabPane>
+
         <TabPane Key="single" Tab="Câu hỏi đơn">
             <div style="margin-bottom:12px">
                 <Button Type="ButtonType.Primary" Icon="plus" OnClick="OpenAddQuestion">Thêm câu hỏi</Button>
@@ -192,6 +199,15 @@
                 <FormItem Label="Số thứ tự">
                     <AntDesign.InputNumber @bind-Value="_editingQuestion.OrderNumber" Min="1" Style="width:160px" />
                 </FormItem>
+                <FormItem Label="Part" Required>
+                    <Select TItem="PartViewModel" TItemValue="long?" @bind-Value="_editingQuestion.PartId"
+                            AllowClear Placeholder="Chọn Part (bắt buộc)">
+                        @foreach (var part in _parts)
+                        {
+                            <SelectOption TItemValue="long?" TItem="PartViewModel" Value="@((long?)part.Id)" Label="@($"Part {(int)part.PartNum}")" />
+                        }
+                    </Select>
+                </FormItem>
                 <FormItem Label="Ảnh câu hỏi">
                     @if (!string.IsNullOrEmpty(_editingQuestion.Image))
                     {
@@ -241,6 +257,15 @@
             <Form Model="_editingGroup" Layout="@FormLayout.Vertical">
                 <FormItem Label="Tên nhóm">
                     <Input @bind-Value="_editingGroup.Name" Placeholder="Ví dụ: Part 3 - Listen 1" />
+                </FormItem>
+                <FormItem Label="Part" Required>
+                    <Select TItem="PartViewModel" TItemValue="long?" @bind-Value="_editingGroup.PartId"
+                            AllowClear Placeholder="Chọn Part (bắt buộc)">
+                        @foreach (var part in _parts)
+                        {
+                            <SelectOption TItemValue="long?" TItem="PartViewModel" Value="@((long?)part.Id)" Label="@($"Part {(int)part.PartNum}")" />
+                        }
+                    </Select>
                 </FormItem>
                 <FormItem Label="Audio nhóm">
                     @if (!string.IsNullOrEmpty(_editingGroup.Audio))
@@ -339,6 +364,7 @@
     private List<TestCategoryViewModel> _categories = new();
     private List<QuestionViewModel> _questions = new();
     private List<QuestionGroupViewModel> _questionGroups = new();
+    private List<PartViewModel> _parts = new();
     private bool _loading = true;
     private bool _saving;
     private bool _savingQ;
@@ -359,9 +385,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _categories = (await TestService.GetCategoriesAsync()).ToList();
-        _tests = (await TestService.GetAllAsync()).ToList();
-        _loading = false;
+        try
+        {
+            _categories = (await TestService.GetCategoriesAsync()).ToList();
+            _tests = (await TestService.GetAllAsync()).ToList();
+        }
+        catch (Exception ex) { await Message.ErrorAsync($"Lỗi tải dữ liệu: {ex.Message}"); }
+        finally { _loading = false; }
     }
 
     // ── Test CRUD ────────────────────────────────────────────────
@@ -438,9 +468,20 @@
     private async Task OpenQuestions(TestViewModel t)
     {
         _selectedTest = t;
-        _questions = (await TestService.GetQuestionsAsync(t.Id)).OrderBy(q => q.OrderNumber).ToList();
-        _questionGroups = (await TestService.GetQuestionGroupsAsync(t.Id)).ToList();
-        _questionDrawerOpen = true;
+        try
+        {
+            _questions = (await TestService.GetQuestionsAsync(t.Id)).OrderBy(q => q.OrderNumber).ToList();
+            _questionGroups = (await TestService.GetQuestionGroupsAsync(t.Id)).ToList();
+            _parts = (await TestService.GetPartsAsync(t.Id)).ToList();
+            _questionDrawerOpen = true;
+        }
+        catch (Exception ex) { await Message.ErrorAsync($"Lỗi tải câu hỏi: {ex.Message}"); }
+    }
+
+    private async Task OnPartsChanged()
+    {
+        try { _parts = (await TestService.GetPartsAsync(_selectedTest!.Id)).ToList(); }
+        catch (Exception ex) { await Message.ErrorAsync($"Lỗi tải Part: {ex.Message}"); }
     }
 
     private void CloseQuestionDrawer() => _questionDrawerOpen = false;
@@ -614,21 +655,37 @@
     // ── File upload helpers ──────────────────────────────────────
 
     private async Task OnListeningAudioUpload(InputFileChangeEventArgs e)
-        => _editingTest.ListeningAudio = await SaveUploadedFile(e.File, "audio");
+    {
+        try { _editingTest.ListeningAudio = await SaveUploadedFile(e.File, "audio"); }
+        catch (Exception ex) { await Message.ErrorAsync($"Lỗi tải file: {ex.Message}"); }
+    }
 
     private async Task OnImageUpload(InputFileChangeEventArgs e)
-        => _editingQuestion.Image = await SaveUploadedFile(e.File, "images");
+    {
+        try { _editingQuestion.Image = await SaveUploadedFile(e.File, "images"); }
+        catch (Exception ex) { await Message.ErrorAsync($"Lỗi tải file: {ex.Message}"); }
+    }
 
     private async Task OnQuestionAudioUpload(InputFileChangeEventArgs e)
-        => _editingQuestion.Audio = await SaveUploadedFile(e.File, "audio");
+    {
+        try { _editingQuestion.Audio = await SaveUploadedFile(e.File, "audio"); }
+        catch (Exception ex) { await Message.ErrorAsync($"Lỗi tải file: {ex.Message}"); }
+    }
 
     private async Task OnGroupAudioUpload(InputFileChangeEventArgs e)
-        => _editingGroup.Audio = await SaveUploadedFile(e.File, "audio");
+    {
+        try { _editingGroup.Audio = await SaveUploadedFile(e.File, "audio"); }
+        catch (Exception ex) { await Message.ErrorAsync($"Lỗi tải file: {ex.Message}"); }
+    }
 
     private async Task OnGroupImageUpload(InputFileChangeEventArgs e)
     {
-        var path = await SaveUploadedFile(e.File, "images");
-        _editingGroup.Images.Add(path);
+        try
+        {
+            var path = await SaveUploadedFile(e.File, "images");
+            _editingGroup.Images.Add(path);
+        }
+        catch (Exception ex) { await Message.ErrorAsync($"Lỗi tải file: {ex.Message}"); }
     }
 
     private async Task<string> SaveUploadedFile(IBrowserFile file, string folder)

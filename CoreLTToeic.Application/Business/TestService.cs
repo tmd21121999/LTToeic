@@ -14,15 +14,18 @@ namespace CoreLTToeic.Application.Business
         private readonly IQuestionRepository _questionRepo;
         private readonly IQuestionGroupRepository _groupRepo;
         private readonly ITestCategoryRepository _categoryRepo;
+        private readonly IPartRepository _partRepo;
         private readonly IMapper _mapper;
 
         public TestService(ITestRepository testRepo, IQuestionRepository questionRepo,
-            IQuestionGroupRepository groupRepo, ITestCategoryRepository categoryRepo, IMapper mapper)
+            IQuestionGroupRepository groupRepo, ITestCategoryRepository categoryRepo,
+            IPartRepository partRepo, IMapper mapper)
         {
             _testRepo = testRepo;
             _questionRepo = questionRepo;
             _groupRepo = groupRepo;
             _categoryRepo = categoryRepo;
+            _partRepo = partRepo;
             _mapper = mapper;
         }
 
@@ -178,6 +181,39 @@ namespace CoreLTToeic.Application.Business
             await _groupRepo.SaveChangesAsync();
 
             if (testId > 0) await UpdateTestQuestionCount(testId);
+        }
+
+        public async Task<IEnumerable<PartViewModel>> GetPartsAsync(long testId)
+        {
+            var parts = await _partRepo.GetByTestIdAsync(testId);
+            return _mapper.Map<IEnumerable<PartViewModel>>(parts);
+        }
+
+        public async Task<long> AddPartAsync(PartEditModel model)
+        {
+            var entity = _mapper.Map<Part>(model);
+            _partRepo.Add(entity);
+            await _partRepo.SaveChangesAsync();
+            return entity.Id;
+        }
+
+        public async Task UpdatePartAsync(PartEditModel model)
+        {
+            var entity = await _partRepo.Find(p => p.Id == model.Id).FirstOrDefaultAsync();
+            if (entity == null) return;
+            _mapper.Map(model, entity);
+            _partRepo.Update(entity);
+            await _partRepo.SaveChangesAsync();
+        }
+
+        public async Task DeletePartAsync(long partId)
+        {
+            var entity = await _partRepo.Find(p => p.Id == partId).FirstOrDefaultAsync();
+            if (entity != null)
+            {
+                _partRepo.Remove(entity);
+                await _partRepo.SaveChangesAsync();
+            }
         }
 
         public async Task<IEnumerable<TestCategoryViewModel>> GetCategoriesAsync()

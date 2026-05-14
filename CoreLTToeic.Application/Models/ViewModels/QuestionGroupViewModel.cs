@@ -1,3 +1,5 @@
+using CoreLTToeic.Domain.Enums;
+
 namespace CoreLTToeic.Application.Models.ViewModels
 {
     public class QuestionGroupViewModel
@@ -7,6 +9,8 @@ namespace CoreLTToeic.Application.Models.ViewModels
         public string? Content { get; set; }
         public string? Audio { get; set; }
         public long? TestId { get; set; }
+        public long? PartId { get; set; }
+        public ToeicLRPart? PartNum { get; set; }
         public List<string?> Images { get; set; } = new();
         public List<QuestionViewModel> Questions { get; set; } = new();
     }

@@ -7,6 +7,7 @@ namespace CoreLTToeic.Application.Models.EditModels
         public string? Content { get; set; }
         public string? Audio { get; set; }
         public long TestId { get; set; }
+        public long? PartId { get; set; }
         public List<string> Images { get; set; } = new();
         public List<QuestionEditModel> ChildQuestions { get; set; } = new();
     }

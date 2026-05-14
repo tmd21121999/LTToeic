@@ -21,6 +21,11 @@ namespace CoreLTToeic.Application.Interfaces.IService
         Task UpdateQuestionGroupAsync(QuestionGroupEditModel model);
         Task DeleteQuestionGroupAsync(long groupId);
 
+        Task<IEnumerable<PartViewModel>> GetPartsAsync(long testId);
+        Task<long> AddPartAsync(PartEditModel model);
+        Task UpdatePartAsync(PartEditModel model);
+        Task DeletePartAsync(long partId);
+
         Task<IEnumerable<TestCategoryViewModel>> GetCategoriesAsync();
     }
 }
