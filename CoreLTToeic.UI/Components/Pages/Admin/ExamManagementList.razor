@@ -78,116 +78,284 @@
     </Form>
 </Drawer>
 
-<!-- Drawer: Danh sách câu hỏi + Form thêm/sửa -->
+<!-- Drawer: Danh sách câu hỏi (có Tabs: đơn / nhóm) -->
 <Drawer Visible="_questionDrawerOpen"
         Title="@($"Câu hỏi — {_selectedTest?.Title}")"
-        Width="900"
+        Width="960"
         OnClose="CloseQuestionDrawer">
-
-    @if (!_showQuestionForm)
-    {
-        <div style="margin-bottom:12px">
-            <Button Type="ButtonType.Primary" Icon="plus" OnClick="OpenAddQuestion">Thêm câu hỏi</Button>
-        </div>
-        <Table DataSource="_questions" TItem="QuestionViewModel" Size="TableSize.Small" Bordered>
-            <PropertyColumn Property="c => c.OrderNumber" Title="#" Width="45" />
-            <PropertyColumn Property="c => c.Content" Title="Nội dung câu hỏi" Ellipsis />
-            <ActionColumn Title="Đ/A đúng" Width="90">
-                <Tag Color="@("success")">@context.CorrectAnswer</Tag>
-            </ActionColumn>
-            <ActionColumn Title="File" Width="80">
-                @if (!string.IsNullOrEmpty(context.Image)) { <Icon Type="picture" Theme="IconThemeType.Outline" /> }
-                @if (!string.IsNullOrEmpty(context.Audio)) { <Icon Type="sound" Theme="IconThemeType.Outline" Style="margin-left:4px" /> }
-            </ActionColumn>
-            <ActionColumn Title="Thao tác" Width="140">
-                <Space>
-                    <SpaceItem>
-                        <Button Size="ButtonSize.Small" Icon="edit" OnClick="() => OpenEditQuestion(context)">Sửa</Button>
-                    </SpaceItem>
-                    <SpaceItem>
-                        <Button Size="ButtonSize.Small" Danger OnClick="() => DeleteQuestion(context.Id)">Xoá</Button>
-                    </SpaceItem>
-                </Space>
-            </ActionColumn>
-        </Table>
-    }
-    else
-    {
-        <!-- Question Add/Edit Form -->
-        <div style="margin-bottom:12px">
-            <Button OnClick="() => _showQuestionForm = false">← Quay lại danh sách</Button>
-        </div>
-        <Form Model="_editingQuestion" OnFinish="SaveQuestion" Layout="@FormLayout.Vertical">
-            <FormItem Label="Nội dung câu hỏi" Required>
-                <TextArea @bind-Value="_editingQuestion.Content" Rows="3" />
-            </FormItem>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
-                <FormItem Label="Đáp án A">
-                    <Input @bind-Value="_editingQuestion.Answer1" Placeholder="Đáp án A" />
-                </FormItem>
-                <FormItem Label="Đáp án B">
-                    <Input @bind-Value="_editingQuestion.Answer2" Placeholder="Đáp án B" />
-                </FormItem>
-                <FormItem Label="Đáp án C">
-                    <Input @bind-Value="_editingQuestion.Answer3" Placeholder="Đáp án C" />
-                </FormItem>
-                <FormItem Label="Đáp án D">
-                    <Input @bind-Value="_editingQuestion.Answer4" Placeholder="Đáp án D" />
-                </FormItem>
+    <Tabs>
+        <TabPane Key="single" Tab="Câu hỏi đơn">
+            <div style="margin-bottom:12px">
+                <Button Type="ButtonType.Primary" Icon="plus" OnClick="OpenAddQuestion">Thêm câu hỏi</Button>
             </div>
-            <FormItem Label="Đáp án đúng" Required>
-                <Select TItem="string" TItemValue="string" @bind-Value="_editingQuestion.CorrectAnswer">
-                    <SelectOption TItemValue="string" TItem="string" Value='"A"' Label="A" />
-                    <SelectOption TItemValue="string" TItem="string" Value='"B"' Label="B" />
-                    <SelectOption TItemValue="string" TItem="string" Value='"C"' Label="C" />
-                    <SelectOption TItemValue="string" TItem="string" Value='"D"' Label="D" />
-                </Select>
-            </FormItem>
-            <FormItem Label="Số thứ tự">
-                <AntDesign.InputNumber @bind-Value="_editingQuestion.OrderNumber" Min="1" Style="width:160px" />
-            </FormItem>
-            <FormItem Label="Ảnh câu hỏi">
-                @if (!string.IsNullOrEmpty(_editingQuestion.Image))
-                {
-                    <img src="@_editingQuestion.Image" alt="img"
-                         style="max-width:260px;max-height:180px;display:block;margin-bottom:8px;border-radius:4px" />
-                }
-                <InputFile OnChange="OnImageUpload" accept="image/*" />
-            </FormItem>
-            <FormItem Label="Audio câu hỏi">
-                @if (!string.IsNullOrEmpty(_editingQuestion.Audio))
-                {
-                    <audio controls src="@_editingQuestion.Audio" style="width:100%;margin-bottom:8px" />
-                }
-                <InputFile OnChange="OnQuestionAudioUpload" accept="audio/*" />
-            </FormItem>
-            <FormItem Label="Transcript">
-                <TextArea @bind-Value="_editingQuestion.Transcript" Rows="2" Placeholder="Phần transcript (nếu có)" />
-            </FormItem>
-            <FormItem>
-                <Button Type="ButtonType.Primary" HtmlType="submit" Loading="_savingQ">Lưu câu hỏi</Button>
-                <Button Style="margin-left:8px" OnClick="() => _showQuestionForm = false">Huỷ</Button>
-            </FormItem>
-        </Form>
-    }
+            <Table DataSource="_questions" TItem="QuestionViewModel" Size="TableSize.Small" Bordered>
+                <PropertyColumn Property="c => c.OrderNumber" Title="#" Width="45" />
+                <PropertyColumn Property="c => c.Content" Title="Nội dung câu hỏi" Ellipsis />
+                <ActionColumn Title="Đ/A đúng" Width="90">
+                    <Tag Color="@("success")">@context.CorrectAnswer</Tag>
+                </ActionColumn>
+                <ActionColumn Title="File" Width="80">
+                    @if (!string.IsNullOrEmpty(context.Image)) { <Icon Type="picture" Theme="IconThemeType.Outline" /> }
+                    @if (!string.IsNullOrEmpty(context.Audio)) { <Icon Type="sound" Theme="IconThemeType.Outline" Style="margin-left:4px" /> }
+                </ActionColumn>
+                <ActionColumn Title="Thao tác" Width="140">
+                    <Space>
+                        <SpaceItem>
+                            <Button Size="ButtonSize.Small" Icon="edit" OnClick="() => OpenEditQuestion(context)">Sửa</Button>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <Button Size="ButtonSize.Small" Danger OnClick="() => DeleteQuestion(context.Id)">Xoá</Button>
+                        </SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </Table>
+        </TabPane>
+
+        <TabPane Key="group" Tab="Nhóm câu hỏi">
+            <div style="margin-bottom:12px">
+                <Button Type="ButtonType.Primary" Icon="plus" OnClick="OpenAddQuestionGroup">Thêm nhóm câu hỏi</Button>
+            </div>
+            <Table DataSource="_questionGroups" TItem="QuestionGroupViewModel" Size="TableSize.Small" Bordered>
+                <PropertyColumn Property="c => c.Id" Title="ID" Width="60" />
+                <PropertyColumn Property="c => c.Name" Title="Tên nhóm" />
+                <ActionColumn Title="Câu hỏi con" Width="100">
+                    <Tag>@context.Questions.Count câu</Tag>
+                </ActionColumn>
+                <ActionColumn Title="File" Width="80">
+                    @if (!string.IsNullOrEmpty(context.Audio)) { <Icon Type="sound" Theme="IconThemeType.Outline" /> }
+                    @if (context.Images.Any(i => !string.IsNullOrEmpty(i))) { <Icon Type="picture" Theme="IconThemeType.Outline" Style="margin-left:4px" /> }
+                </ActionColumn>
+                <ActionColumn Title="Thao tác" Width="140">
+                    <Space>
+                        <SpaceItem>
+                            <Button Size="ButtonSize.Small" Icon="edit" OnClick="() => OpenEditQuestionGroup(context)">Sửa</Button>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <Button Size="ButtonSize.Small" Danger OnClick="() => DeleteQuestionGroup(context.Id)">Xoá</Button>
+                        </SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </Table>
+        </TabPane>
+    </Tabs>
 </Drawer>
+
+<!-- Modal: Form thêm/sửa câu hỏi đơn (fullscreen 50/50) -->
+<Modal Visible="_questionModalOpen"
+       Title="@(_editingQuestion.Id == 0 ? "Thêm câu hỏi" : "Sửa câu hỏi")"
+       Width="@("98vw")"
+       Style="top:8px"
+       Footer="@null"
+       OnCancel="CloseQuestionModal">
+    <div style="display:flex;gap:0;height:calc(100vh - 140px);overflow:hidden">
+        <!-- Left 50%: live preview -->
+        <div style="flex:0 0 50%;overflow-y:auto;padding-right:20px;border-right:1px solid #f0f0f0">
+            <QuestionPreviewCard Audio="@_editingQuestion.Audio"
+                                 Image="@_editingQuestion.Image"
+                                 Content="@_editingQuestion.Content"
+                                 Answer1="@_editingQuestion.Answer1"
+                                 Answer2="@_editingQuestion.Answer2"
+                                 Answer3="@_editingQuestion.Answer3"
+                                 Answer4="@_editingQuestion.Answer4"
+                                 CorrectAnswer="@_editingQuestion.CorrectAnswer"
+                                 Transcript="@_editingQuestion.Transcript"
+                                 ShowCorrectAnswer="true" />
+        </div>
+        <!-- Right 50%: form -->
+        <div style="flex:1;overflow-y:auto;padding-left:20px">
+            <Form Model="_editingQuestion" OnFinish="SaveQuestion" Layout="@FormLayout.Vertical">
+                <FormItem Label="Nội dung câu hỏi" Required>
+                    <RichTextEditor @bind-Value="_editingQuestion.Content" Height="200" />
+                </FormItem>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
+                    <FormItem Label="Đáp án A">
+                        <Input @bind-Value="_editingQuestion.Answer1" Placeholder="Đáp án A" />
+                    </FormItem>
+                    <FormItem Label="Đáp án B">
+                        <Input @bind-Value="_editingQuestion.Answer2" Placeholder="Đáp án B" />
+                    </FormItem>
+                    <FormItem Label="Đáp án C">
+                        <Input @bind-Value="_editingQuestion.Answer3" Placeholder="Đáp án C" />
+                    </FormItem>
+                    <FormItem Label="Đáp án D">
+                        <Input @bind-Value="_editingQuestion.Answer4" Placeholder="Đáp án D" />
+                    </FormItem>
+                </div>
+                <FormItem Label="Đáp án đúng" Required>
+                    <Select TItem="string" TItemValue="string" @bind-Value="_editingQuestion.CorrectAnswer">
+                        <SelectOption TItemValue="string" TItem="string" Value='"A"' Label="A" />
+                        <SelectOption TItemValue="string" TItem="string" Value='"B"' Label="B" />
+                        <SelectOption TItemValue="string" TItem="string" Value='"C"' Label="C" />
+                        <SelectOption TItemValue="string" TItem="string" Value='"D"' Label="D" />
+                    </Select>
+                </FormItem>
+                <FormItem Label="Số thứ tự">
+                    <AntDesign.InputNumber @bind-Value="_editingQuestion.OrderNumber" Min="1" Style="width:160px" />
+                </FormItem>
+                <FormItem Label="Ảnh câu hỏi">
+                    @if (!string.IsNullOrEmpty(_editingQuestion.Image))
+                    {
+                        <img src="@_editingQuestion.Image" alt="img"
+                             style="max-width:200px;max-height:120px;display:block;margin-bottom:6px;border-radius:4px;border:1px solid #eee" />
+                        <div style="font-size:12px;color:#888;margin-bottom:6px">@_editingQuestion.Image</div>
+                    }
+                    <InputFile OnChange="OnImageUpload" accept="image/*" />
+                </FormItem>
+                <FormItem Label="Audio câu hỏi">
+                    @if (!string.IsNullOrEmpty(_editingQuestion.Audio))
+                    {
+                        <audio controls src="@_editingQuestion.Audio" style="width:100%;margin-bottom:6px" />
+                        <div style="font-size:12px;color:#888;margin-bottom:6px">@_editingQuestion.Audio</div>
+                    }
+                    <InputFile OnChange="OnQuestionAudioUpload" accept="audio/*" />
+                </FormItem>
+                <FormItem Label="Transcript">
+                    <TextArea @bind-Value="_editingQuestion.Transcript" Rows="2" Placeholder="Phần transcript (nếu có)" />
+                </FormItem>
+                <FormItem>
+                    <Button Type="ButtonType.Primary" HtmlType="submit" Loading="_savingQ">Lưu câu hỏi</Button>
+                    <Button Style="margin-left:8px" OnClick="CloseQuestionModal">Huỷ</Button>
+                </FormItem>
+            </Form>
+        </div>
+    </div>
+</Modal>
+
+<!-- Modal: Form thêm/sửa nhóm câu hỏi (fullscreen 50/50) -->
+<Modal Visible="_groupModalOpen"
+       Title="@(_editingGroup.Id == 0 ? "Thêm nhóm câu hỏi" : "Sửa nhóm câu hỏi")"
+       Width="@("98vw")"
+       Style="top:8px"
+       Footer="@null"
+       OnCancel="CloseGroupModal">
+    <div style="display:flex;gap:0;height:calc(100vh - 140px);overflow:hidden">
+        <!-- Left 50%: live preview -->
+        <div style="flex:0 0 50%;overflow-y:auto;padding-right:20px;border-right:1px solid #f0f0f0">
+            <QuestionGroupPreviewCard Audio="@_editingGroup.Audio"
+                                      Images="@_editingGroup.Images"
+                                      Content="@_editingGroup.Content"
+                                      ChildQuestions="@_editingGroup.ChildQuestions" />
+        </div>
+        <!-- Right 50%: form -->
+        <div style="flex:1;overflow-y:auto;padding-left:20px">
+            <Form Model="_editingGroup" Layout="@FormLayout.Vertical">
+                <FormItem Label="Tên nhóm">
+                    <Input @bind-Value="_editingGroup.Name" Placeholder="Ví dụ: Part 3 - Listen 1" />
+                </FormItem>
+                <FormItem Label="Audio nhóm">
+                    @if (!string.IsNullOrEmpty(_editingGroup.Audio))
+                    {
+                        <audio controls src="@_editingGroup.Audio" style="width:100%;margin-bottom:6px" />
+                        <div style="font-size:12px;color:#888;margin-bottom:6px">@_editingGroup.Audio</div>
+                    }
+                    <InputFile OnChange="OnGroupAudioUpload" accept="audio/*" />
+                </FormItem>
+                <FormItem Label="Ảnh nhóm">
+                    @if (_editingGroup.Images.Any())
+                    {
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+                            @foreach (var img in _editingGroup.Images)
+                            {
+                                <div style="position:relative">
+                                    <img src="@img" style="max-height:80px;border-radius:4px;border:1px solid #eee" />
+                                    <Button Size="ButtonSize.Small" Danger
+                                            Style="position:absolute;top:-6px;right:-6px;padding:0 4px;min-width:0;height:18px;font-size:11px"
+                                            OnClick="() => _editingGroup.Images.Remove(img)">×</Button>
+                                </div>
+                            }
+                        </div>
+                    }
+                    <InputFile OnChange="OnGroupImageUpload" accept="image/*" />
+                </FormItem>
+                <FormItem Label="Nội dung / đoạn văn">
+                    <RichTextEditor @bind-Value="_editingGroup.Content" Height="200" />
+                </FormItem>
+            </Form>
+
+            <!-- Câu hỏi con -->
+            <Divider Style="font-weight:600">Câu hỏi con (@_editingGroup.ChildQuestions.Count)</Divider>
+
+            @for (int i = 0; i < _editingGroup.ChildQuestions.Count; i++)
+            {
+                var idx = i;
+                var child = _editingGroup.ChildQuestions[idx];
+                <div style="border:1px solid #e8e8e8;border-radius:8px;padding:12px;margin-bottom:12px;background:#fafafa">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                        <strong style="color:#1677ff">Câu @(idx + 1)</strong>
+                        <Button Size="ButtonSize.Small" Danger OnClick="() => RemoveChildQuestion(idx)">Xoá</Button>
+                    </div>
+                    <div style="margin-bottom:8px">
+                        <label style="font-size:13px;color:#555;display:block;margin-bottom:4px">Nội dung câu hỏi</label>
+                        <RichTextEditor @bind-Value="child.Content" Height="150" />
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                        <div>
+                            <label style="font-size:13px;color:#555">Đáp án A</label>
+                            <Input @bind-Value="child.Answer1" Placeholder="A" />
+                        </div>
+                        <div>
+                            <label style="font-size:13px;color:#555">Đáp án B</label>
+                            <Input @bind-Value="child.Answer2" Placeholder="B" />
+                        </div>
+                        <div>
+                            <label style="font-size:13px;color:#555">Đáp án C</label>
+                            <Input @bind-Value="child.Answer3" Placeholder="C" />
+                        </div>
+                        <div>
+                            <label style="font-size:13px;color:#555">Đáp án D</label>
+                            <Input @bind-Value="child.Answer4" Placeholder="D" />
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:16px;align-items:center">
+                        <div>
+                            <label style="font-size:13px;color:#555;margin-right:8px">Đáp án đúng</label>
+                            <Select TItem="string" TItemValue="string" @bind-Value="child.CorrectAnswer" Style="width:80px">
+                                <SelectOption TItemValue="string" TItem="string" Value='"A"' Label="A" />
+                                <SelectOption TItemValue="string" TItem="string" Value='"B"' Label="B" />
+                                <SelectOption TItemValue="string" TItem="string" Value='"C"' Label="C" />
+                                <SelectOption TItemValue="string" TItem="string" Value='"D"' Label="D" />
+                            </Select>
+                        </div>
+                        <div>
+                            <label style="font-size:13px;color:#555;margin-right:8px">Số thứ tự</label>
+                            <AntDesign.InputNumber @bind-Value="child.OrderNumber" Min="1" Style="width:80px" />
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <Button Icon="plus" OnClick="AddChildQuestion" Style="width:100%;margin-bottom:16px">Thêm câu hỏi phụ</Button>
+
+            <div>
+                <Button Type="ButtonType.Primary" Loading="_savingGroup" OnClick="SaveQuestionGroup">Lưu nhóm câu hỏi</Button>
+                <Button Style="margin-left:8px" OnClick="CloseGroupModal">Huỷ</Button>
+            </div>
+        </div>
+    </div>
+</Modal>
 
 @code {
     private List<TestViewModel> _tests = new();
     private List<TestCategoryViewModel> _categories = new();
     private List<QuestionViewModel> _questions = new();
+    private List<QuestionGroupViewModel> _questionGroups = new();
     private bool _loading = true;
     private bool _saving;
     private bool _savingQ;
+    private bool _savingGroup;
 
     private bool _testDrawerOpen;
     private TestEditModel _editingTest = new();
     private string _catIdStr = "";
 
     private bool _questionDrawerOpen;
-    private bool _showQuestionForm;
     private TestViewModel? _selectedTest;
+
+    private bool _questionModalOpen;
     private QuestionEditModel _editingQuestion = new();
+
+    private bool _groupModalOpen;
+    private QuestionGroupEditModel _editingGroup = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -195,6 +363,8 @@
         _tests = (await TestService.GetAllAsync()).ToList();
         _loading = false;
     }
+
+    // ── Test CRUD ────────────────────────────────────────────────
 
     private void OpenAddTest()
     {
@@ -244,46 +414,38 @@
 
     private async Task DeleteTest(long id)
     {
+        var confirmed = await Modal.ConfirmAsync(new ConfirmOptions
+        {
+            Title = "Xác nhận xoá",
+            Content = "Bạn có chắc chắn muốn xoá đề thi này? Hành động này không thể hoàn tác.",
+            OkText = "Xoá",
+            CancelText = "Huỷ",
+            OkButtonProps = new ButtonProps { Danger = true }
+        });
+        if (!confirmed) return;
+
         try
         {
-            // Show confirmation modal using ModalService
-            var okText = "Xoá";
-            var cancelText = "Huỷ";
-            var confirmed = await Modal.ConfirmAsync(new ConfirmOptions
-            {
-                Title = "Xác nhận xoá",
-                Content = "Bạn có chắc chắn muốn xoá đề thi này? Hành động này không thể hoàn tác.",
-                OkText = okText,
-                CancelText = cancelText,
-                OkButtonProps = new ButtonProps { Danger = true }
-            });
-
-            if (!confirmed)
-                return;
-
             await TestService.DeleteAsync(id);
             _tests = (await TestService.GetAllAsync()).ToList();
             await Message.SuccessAsync("Đã xoá đề thi thành công");
         }
-        catch (Exception ex)
-        {
-            await Message.ErrorAsync($"Lỗi khi xoá đề thi: {ex.Message}");
-        }
+        catch (Exception ex) { await Message.ErrorAsync($"Lỗi khi xoá đề thi: {ex.Message}"); }
     }
+
+    // ── Question drawer ──────────────────────────────────────────
 
     private async Task OpenQuestions(TestViewModel t)
     {
         _selectedTest = t;
-        _showQuestionForm = false;
         _questions = (await TestService.GetQuestionsAsync(t.Id)).OrderBy(q => q.OrderNumber).ToList();
+        _questionGroups = (await TestService.GetQuestionGroupsAsync(t.Id)).ToList();
         _questionDrawerOpen = true;
     }
 
-    private void CloseQuestionDrawer()
-    {
-        _questionDrawerOpen = false;
-        _showQuestionForm = false;
-    }
+    private void CloseQuestionDrawer() => _questionDrawerOpen = false;
+
+    // ── Single question CRUD ─────────────────────────────────────
 
     private void OpenAddQuestion()
     {
@@ -293,7 +455,7 @@
             OrderNumber = _questions.Count + 1,
             CorrectAnswer = "A"
         };
-        _showQuestionForm = true;
+        _questionModalOpen = true;
     }
 
     private void OpenEditQuestion(QuestionViewModel q)
@@ -313,8 +475,10 @@
             OrderNumber = q.OrderNumber,
             TestId = _selectedTest!.Id
         };
-        _showQuestionForm = true;
+        _questionModalOpen = true;
     }
+
+    private void CloseQuestionModal() => _questionModalOpen = false;
 
     private async Task SaveQuestion()
     {
@@ -326,58 +490,145 @@
             else
                 await TestService.UpdateQuestionAsync(_editingQuestion);
             _questions = (await TestService.GetQuestionsAsync(_selectedTest!.Id)).OrderBy(q => q.OrderNumber).ToList();
-            _showQuestionForm = false;
+            _questionModalOpen = false;
             await Message.SuccessAsync("Lưu câu hỏi thành công");
         }
-        catch (Exception ex)
-        {
-            await Message.ErrorAsync($"Lỗi: {ex.Message}");
-        }
+        catch (Exception ex) { await Message.ErrorAsync($"Lỗi: {ex.Message}"); }
         finally { _savingQ = false; }
     }
 
     private async Task DeleteQuestion(long id)
     {
+        var confirmed = await Modal.ConfirmAsync(new ConfirmOptions
+        {
+            Title = "Xác nhận xoá",
+            Content = "Bạn có chắc chắn muốn xoá câu hỏi này?",
+            OkText = "Xoá",
+            CancelText = "Huỷ",
+            OkButtonProps = new ButtonProps { Danger = true }
+        });
+        if (!confirmed) return;
+
         try
         {
-            // Show confirmation modal using ModalService
-            var okText = "Xoá";
-            var cancelText = "Huỷ";
-            var confirmed = await Modal.ConfirmAsync(new ConfirmOptions
-            {
-                Title = "Xác nhận xoá",
-                Content = "Bạn có chắc chắn muốn xoá câu hỏi này? Hành động này không thể hoàn tác.",
-                OkText = okText,
-                CancelText = cancelText,
-                OkButtonProps = new ButtonProps { Danger = true }
-            });
-
-            if (!confirmed)
-                return;
-
             await TestService.DeleteQuestionAsync(id);
             _questions = (await TestService.GetQuestionsAsync(_selectedTest!.Id)).OrderBy(q => q.OrderNumber).ToList();
             await Message.SuccessAsync("Đã xoá câu hỏi thành công");
         }
-        catch (Exception ex)
-        {
-            await Message.ErrorAsync($"Lỗi khi xoá câu hỏi: {ex.Message}");
-        }
+        catch (Exception ex) { await Message.ErrorAsync($"Lỗi khi xoá câu hỏi: {ex.Message}"); }
     }
+
+    // ── Question group CRUD ──────────────────────────────────────
+
+    private void OpenAddQuestionGroup()
+    {
+        _editingGroup = new QuestionGroupEditModel { TestId = _selectedTest!.Id };
+        _groupModalOpen = true;
+    }
+
+    private void OpenEditQuestionGroup(QuestionGroupViewModel g)
+    {
+        _editingGroup = new QuestionGroupEditModel
+        {
+            Id = g.Id,
+            Name = g.Name,
+            Content = g.Content,
+            Audio = g.Audio,
+            TestId = _selectedTest!.Id,
+            Images = g.Images.Where(i => i != null).Select(i => i!).ToList(),
+            ChildQuestions = g.Questions.Select(q => new QuestionEditModel
+            {
+                Id = q.Id,
+                Content = q.Content ?? "",
+                Answer1 = q.Answer1,
+                Answer2 = q.Answer2,
+                Answer3 = q.Answer3,
+                Answer4 = q.Answer4,
+                CorrectAnswer = q.CorrectAnswer ?? "A",
+                OrderNumber = q.OrderNumber,
+                TestId = _selectedTest!.Id,
+                QuestionGroupId = g.Id
+            }).ToList()
+        };
+        _groupModalOpen = true;
+    }
+
+    private void CloseGroupModal() => _groupModalOpen = false;
+
+    private void AddChildQuestion()
+    {
+        _editingGroup.ChildQuestions.Add(new QuestionEditModel
+        {
+            TestId = _selectedTest!.Id,
+            CorrectAnswer = "A",
+            OrderNumber = _editingGroup.ChildQuestions.Count + 1
+        });
+    }
+
+    private void RemoveChildQuestion(int idx)
+    {
+        if (idx >= 0 && idx < _editingGroup.ChildQuestions.Count)
+            _editingGroup.ChildQuestions.RemoveAt(idx);
+    }
+
+    private async Task SaveQuestionGroup()
+    {
+        _savingGroup = true;
+        try
+        {
+            if (_editingGroup.Id == 0)
+                await TestService.AddQuestionGroupAsync(_editingGroup);
+            else
+                await TestService.UpdateQuestionGroupAsync(_editingGroup);
+            _questionGroups = (await TestService.GetQuestionGroupsAsync(_selectedTest!.Id)).ToList();
+            _questions = (await TestService.GetQuestionsAsync(_selectedTest!.Id)).OrderBy(q => q.OrderNumber).ToList();
+            _groupModalOpen = false;
+            await Message.SuccessAsync("Lưu nhóm câu hỏi thành công");
+        }
+        catch (Exception ex) { await Message.ErrorAsync($"Lỗi: {ex.Message}"); }
+        finally { _savingGroup = false; }
+    }
+
+    private async Task DeleteQuestionGroup(long id)
+    {
+        var confirmed = await Modal.ConfirmAsync(new ConfirmOptions
+        {
+            Title = "Xác nhận xoá",
+            Content = "Bạn có chắc chắn muốn xoá nhóm câu hỏi này? Tất cả câu hỏi con cũng sẽ bị xoá.",
+            OkText = "Xoá",
+            CancelText = "Huỷ",
+            OkButtonProps = new ButtonProps { Danger = true }
+        });
+        if (!confirmed) return;
+
+        try
+        {
+            await TestService.DeleteQuestionGroupAsync(id);
+            _questionGroups = (await TestService.GetQuestionGroupsAsync(_selectedTest!.Id)).ToList();
+            _questions = (await TestService.GetQuestionsAsync(_selectedTest!.Id)).OrderBy(q => q.OrderNumber).ToList();
+            await Message.SuccessAsync("Đã xoá nhóm câu hỏi thành công");
+        }
+        catch (Exception ex) { await Message.ErrorAsync($"Lỗi khi xoá nhóm: {ex.Message}"); }
+    }
+
+    // ── File upload helpers ──────────────────────────────────────
 
     private async Task OnListeningAudioUpload(InputFileChangeEventArgs e)
-    {
-        _editingTest.ListeningAudio = await SaveUploadedFile(e.File, "audio");
-    }
+        => _editingTest.ListeningAudio = await SaveUploadedFile(e.File, "audio");
 
     private async Task OnImageUpload(InputFileChangeEventArgs e)
-    {
-        _editingQuestion.Image = await SaveUploadedFile(e.File, "images");
-    }
+        => _editingQuestion.Image = await SaveUploadedFile(e.File, "images");
 
     private async Task OnQuestionAudioUpload(InputFileChangeEventArgs e)
+        => _editingQuestion.Audio = await SaveUploadedFile(e.File, "audio");
+
+    private async Task OnGroupAudioUpload(InputFileChangeEventArgs e)
+        => _editingGroup.Audio = await SaveUploadedFile(e.File, "audio");
+
+    private async Task OnGroupImageUpload(InputFileChangeEventArgs e)
     {
-        _editingQuestion.Audio = await SaveUploadedFile(e.File, "audio");
+        var path = await SaveUploadedFile(e.File, "images");
+        _editingGroup.Images.Add(path);
     }
 
     private async Task<string> SaveUploadedFile(IBrowserFile file, string folder)

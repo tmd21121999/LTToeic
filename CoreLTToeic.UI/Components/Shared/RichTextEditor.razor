@@ -1,0 +1,68 @@
+@inject IJSRuntime JS
+
+<div id="@_wrapperId">
+    <TextEditor @ref="_editor"
+                Theme="EditorTheme.Snow"
+                OnTextChanged="HandleChanged"
+                WrapImagesInFigures="false">
+        <ToolbarContent>
+            <span class="ql-formats">
+                <button class="ql-bold"></button>
+                <button class="ql-italic"></button>
+                <button class="ql-underline"></button>
+            </span>
+            <span class="ql-formats">
+                <button class="ql-list" value="ordered"></button>
+                <button class="ql-list" value="bullet"></button>
+            </span>
+            <span class="ql-formats">
+                <button class="ql-link"></button>
+            </span>
+        </ToolbarContent>
+    </TextEditor>
+</div>
+
+@code {
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public int Height { get; set; } = 280;
+
+    private TextEditor _editor = null!;
+    private string _wrapperId = "qeditor-" + Guid.NewGuid().ToString("N")[..8];
+    private bool _initialized;
+    private string _lastValue = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (!string.IsNullOrEmpty(Value))
+            {
+                await Task.Delay(100); // allow Quill to fully initialize
+                await JS.InvokeVoidAsync("QuillHelpers.setEditorHTML", _wrapperId, Value);
+                _lastValue = Value;
+            }
+            _initialized = true;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_initialized && Value != _lastValue)
+        {
+            _lastValue = Value;
+            await JS.InvokeVoidAsync("QuillHelpers.setEditorHTML", _wrapperId, Value ?? "");
+        }
+    }
+
+    private async Task HandleChanged()
+    {
+        var html = await JS.InvokeAsync<string>("QuillHelpers.getEditorHTML", _wrapperId);
+        _lastValue = html;
+        if (html != Value)
+        {
+            Value = html;
+            await ValueChanged.InvokeAsync(html);
+        }
+    }
+}

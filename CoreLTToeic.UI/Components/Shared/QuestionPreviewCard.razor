@@ -1,0 +1,200 @@
+<div class="qpreview-card">
+    <div class="qpreview-title">Xem trước câu hỏi</div>
+
+    @if (!string.IsNullOrEmpty(Audio))
+    {
+        <audio controls src="@Audio" style="width:100%;margin-bottom:12px" />
+    }
+
+    @if (!string.IsNullOrEmpty(Image))
+    {
+        <img src="@Image" alt="Hình câu hỏi"
+             style="max-width:100%;max-height:220px;display:block;margin-bottom:12px;border-radius:6px;object-fit:contain" />
+    }
+
+    <div class="qpreview-content">
+        @if (!string.IsNullOrWhiteSpace(Content))
+        {
+            @((MarkupString)Content)
+        }
+        else
+        {
+            <span class="qpreview-placeholder">Nội dung câu hỏi...</span>
+        }
+    </div>
+
+    <div class="qpreview-answers">
+        @foreach (var opt in _options)
+        {
+            <div class="qpreview-answer @(ShowCorrectAnswer && opt.Key == CorrectAnswer ? "correct" : "")">
+                <span class="qpreview-answer-key">@opt.Key</span>
+                <span class="qpreview-answer-text">
+                    @if (!string.IsNullOrWhiteSpace(opt.Value))
+                    {
+                        @opt.Value
+                    }
+                    else
+                    {
+                        <span class="qpreview-placeholder">Đáp án @opt.Key</span>
+                    }
+                </span>
+                @if (ShowCorrectAnswer && opt.Key == CorrectAnswer)
+                {
+                    <Icon Type="check-circle" Theme="IconThemeType.TwoTone" TwotoneColor="#52c41a" Style="margin-left:auto;flex-shrink:0" />
+                }
+            </div>
+        }
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Transcript))
+    {
+        <div class="qpreview-transcript">
+            <div class="qpreview-transcript-label" @onclick="ToggleTranscript">
+                <Icon Type="@(_transcriptOpen ? "up" : "down")" />
+                Transcript
+            </div>
+            @if (_transcriptOpen)
+            {
+                <div class="qpreview-transcript-body">@Transcript</div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .qpreview-card {
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.08);
+        position: sticky;
+        top: 0;
+    }
+
+    .qpreview-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .qpreview-content {
+        font-size: 15px;
+        line-height: 1.6;
+        color: #222;
+        margin-bottom: 16px;
+        min-height: 40px;
+    }
+
+    .qpreview-placeholder {
+        color: #bbb;
+        font-style: italic;
+    }
+
+    .qpreview-answers {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .qpreview-answer {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        background: #fafafa;
+        transition: all .15s;
+    }
+
+    .qpreview-answer.correct {
+        border-color: #52c41a;
+        background: #f6ffed;
+    }
+
+    .qpreview-answer-key {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 1.5px solid #d9d9d9;
+        font-size: 12px;
+        font-weight: 600;
+        flex-shrink: 0;
+        color: #555;
+    }
+
+    .qpreview-answer.correct .qpreview-answer-key {
+        border-color: #52c41a;
+        color: #52c41a;
+    }
+
+    .qpreview-answer-text {
+        font-size: 14px;
+        color: #333;
+        flex: 1;
+    }
+
+    .qpreview-transcript {
+        margin-top: 8px;
+        border-top: 1px dashed #e8e8e8;
+        padding-top: 8px;
+    }
+
+    .qpreview-transcript-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #555;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        user-select: none;
+    }
+
+    .qpreview-transcript-label:hover {
+        color: #1677ff;
+    }
+
+    .qpreview-transcript-body {
+        margin-top: 8px;
+        font-size: 13px;
+        color: #555;
+        line-height: 1.6;
+        white-space: pre-wrap;
+    }
+</style>
+
+@code {
+    [Parameter] public string? Audio { get; set; }
+    [Parameter] public string? Image { get; set; }
+    [Parameter] public string? Content { get; set; }
+    [Parameter] public string? Answer1 { get; set; }
+    [Parameter] public string? Answer2 { get; set; }
+    [Parameter] public string? Answer3 { get; set; }
+    [Parameter] public string? Answer4 { get; set; }
+    [Parameter] public string? CorrectAnswer { get; set; }
+    [Parameter] public string? Transcript { get; set; }
+    [Parameter] public bool ShowCorrectAnswer { get; set; } = true;
+
+    private bool _transcriptOpen;
+
+    private List<KeyValuePair<string, string?>> _options =>
+    [
+        new("A", Answer1),
+        new("B", Answer2),
+        new("C", Answer3),
+        new("D", Answer4),
+    ];
+
+    private void ToggleTranscript() => _transcriptOpen = !_transcriptOpen;
+}

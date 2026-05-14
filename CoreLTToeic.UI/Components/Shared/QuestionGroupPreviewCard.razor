@@ -1,0 +1,123 @@
+<div class="qpreview-card">
+    <div class="qpreview-title">Xem trước nhóm câu hỏi</div>
+
+    @if (!string.IsNullOrEmpty(Audio))
+    {
+        <audio controls src="@Audio" style="width:100%;margin-bottom:12px" />
+    }
+
+    @if (Images != null && Images.Any(i => !string.IsNullOrEmpty(i)))
+    {
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+            @foreach (var img in Images.Where(i => !string.IsNullOrEmpty(i)))
+            {
+                <img src="@img" alt="img"
+                     style="max-width:100%;max-height:180px;border-radius:6px;object-fit:contain" />
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Content))
+    {
+        <div class="qpreview-passage">@((MarkupString)Content)</div>
+    }
+    else
+    {
+        <div class="qpreview-passage qpreview-placeholder">Nội dung / đoạn văn của nhóm câu hỏi...</div>
+    }
+
+    @if (ChildQuestions != null && ChildQuestions.Any())
+    {
+        <div style="margin-top:12px">
+            @foreach (var (q, idx) in ChildQuestions.Select((q, i) => (q, i)))
+            {
+                <div class="qpreview-child">
+                    <div class="qpreview-child-label">Câu @(idx + 1)</div>
+                    <div class="qpreview-content">
+                        @if (!string.IsNullOrWhiteSpace(q.Content))
+                        {
+                            @((MarkupString)q.Content)
+                        }
+                        else
+                        {
+                            <span class="qpreview-placeholder">Nội dung câu hỏi @(idx + 1)...</span>
+                        }
+                    </div>
+                    <div class="qpreview-answers">
+                        @foreach (var opt in GetOptions(q))
+                        {
+                            <div class="qpreview-answer @(q.CorrectAnswer == opt.Key ? "correct" : "")">
+                                <span class="qpreview-answer-key">@opt.Key</span>
+                                <span class="qpreview-answer-text">
+                                    @if (!string.IsNullOrWhiteSpace(opt.Value))
+                                    {
+                                        @opt.Value
+                                    }
+                                    else
+                                    {
+                                        <span class="qpreview-placeholder">Đáp án @opt.Key</span>
+                                    }
+                                </span>
+                                @if (q.CorrectAnswer == opt.Key)
+                                {
+                                    <Icon Type="check-circle" Theme="IconThemeType.TwoTone" TwotoneColor="#52c41a" Style="margin-left:auto;flex-shrink:0" />
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="qpreview-placeholder" style="margin-top:12px;font-style:italic">Chưa có câu hỏi con...</div>
+    }
+</div>
+
+<style>
+    .qpreview-passage {
+        font-size: 13px;
+        line-height: 1.7;
+        color: #333;
+        background: #f9f9f9;
+        border-left: 3px solid #1677ff;
+        padding: 10px 14px;
+        border-radius: 0 6px 6px 0;
+        margin-bottom: 12px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .qpreview-child {
+        margin-bottom: 16px;
+        padding: 10px;
+        border: 1px solid #f0f0f0;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .qpreview-child-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #1677ff;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: 6px;
+    }
+</style>
+
+@code {
+    [Parameter] public string? Audio { get; set; }
+    [Parameter] public List<string?>? Images { get; set; }
+    [Parameter] public string? Content { get; set; }
+    [Parameter] public List<QuestionEditModel>? ChildQuestions { get; set; }
+
+    private static List<KeyValuePair<string, string?>> GetOptions(QuestionEditModel q) =>
+    [
+        new("A", q.Answer1),
+        new("B", q.Answer2),
+        new("C", q.Answer3),
+        new("D", q.Answer4),
+    ];
+}

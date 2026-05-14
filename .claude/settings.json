@@ -11,7 +11,16 @@
       "Bash(git diff *)",
       "Bash(git status)",
       "Bash(git log)",
-      "Bash(git diff)"
+      "Bash(git diff)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "PowerShell(dotnet build *)",
+      "PowerShell(dotnet run *)",
+      "PowerShell(dotnet ef *)",
+      "PowerShell(dotnet test *)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Get-Process *)"
     ]
   }
 }

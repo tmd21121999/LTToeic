@@ -23,5 +23,6 @@ namespace CoreLTToeic.Application.Models.EditModels
         public int OrderNumber { get; set; }
         public long? PartId { get; set; }
         public long TestId { get; set; }
+        public long? QuestionGroupId { get; set; }
     }
 }

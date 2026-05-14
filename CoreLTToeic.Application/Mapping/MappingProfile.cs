@@ -17,6 +17,13 @@ namespace CoreLTToeic.Application.Mapping
             CreateMap<Question, QuestionViewModel>();
             CreateMap<QuestionEditModel, Question>();
 
+            CreateMap<QuestionGroup, QuestionGroupViewModel>()
+                .ForMember(d => d.Images, o => o.MapFrom(s => s.Images.Select(i => i.Image).ToList()))
+                .ForMember(d => d.Questions, o => o.MapFrom(s => s.Questions));
+            CreateMap<QuestionGroupEditModel, QuestionGroup>()
+                .ForMember(d => d.Images, o => o.Ignore())
+                .ForMember(d => d.Questions, o => o.Ignore());
+
             CreateMap<TestCategory, TestCategoryViewModel>();
         }
     }

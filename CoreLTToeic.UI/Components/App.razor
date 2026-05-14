@@ -9,12 +9,19 @@
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="CoreLTToeic.UI.styles.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="//cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
+    <link href="//cdn.quilljs.com/1.3.6/quill.bubble.css" rel="stylesheet" />
+    <link href="_content/Penman.Blazor.Quill/penman-blazor-quill.css" rel="stylesheet" />
     <HeadOutlet />
 </head>
 
 <body>
     <Routes @rendermode=RenderMode.InteractiveServer />
     <AntContainer />
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="_content/Penman.Blazor.Quill/quill-blot-formatter.min.js"></script>
+    <script src="_content/Penman.Blazor.Quill/penman-blazor-quill.js"></script>
+    <script src="js/quill-helpers.js"></script>
     <script src="_framework/blazor.web.js"></script>
 </body>
 
