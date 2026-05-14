@@ -1,76 +1,76 @@
 @page "/register"
-@using AntDesign
-@using System.Linq
-@using CoreLTToeic.Application.Models.EditModels
-@using CoreLTToeic.Application.Interfaces.IRepository
 @inject IAuthRepository AuthRepository
 @inject MessageService Message
 @inject NavigationManager Navigation
 
-<PageTitle>Register</PageTitle>
+<PageTitle>Đăng ký - LTToeic</PageTitle>
 
-<h3>Create account</h3>
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-brand">
+            <div class="auth-brand-logo">LTToeic</div>
+        </div>
+        <h2 class="auth-title">Tạo tài khoản</h2>
 
-<Form Model="@model" OnFinish="OnFinish" LabelColSpan="6" WrapperColSpan="14">
-    <FormItem Label="Username" Required>
-        <Input @bind-Value="model.UserName" Placeholder="Username" />
-    </FormItem>
+        <Form Model="@_model" OnFinish="OnFinish" Layout="@FormLayout.Vertical">
+            <FormItem Label="Tên đăng nhập" Required>
+                <Input @bind-Value="_model.UserName" Placeholder="Nhập tên đăng nhập" Size="@InputSize.Large" />
+            </FormItem>
+            <FormItem Label="Email" Required>
+                <Input @bind-Value="_model.Email" Placeholder="Nhập email" Size="@InputSize.Large" />
+            </FormItem>
+            <FormItem Label="Họ và tên">
+                <Input @bind-Value="_model.FullName" Placeholder="Nhập họ và tên" Size="@InputSize.Large" />
+            </FormItem>
+            <FormItem Label="Mật khẩu" Required>
+                <InputPassword @bind-Value="_model.Password" Placeholder="Nhập mật khẩu" Size="@InputSize.Large" />
+            </FormItem>
+            <FormItem Label="Xác nhận mật khẩu" Required>
+                <InputPassword @bind-Value="_model.ConfirmPassword" Placeholder="Nhập lại mật khẩu" Size="@InputSize.Large" />
+            </FormItem>
+            <FormItem Style="margin-bottom:0">
+                <Button Type="ButtonType.Primary" HtmlType="submit" Block Size="@AntDesign.ButtonSize.Large"
+                        Style="background:#1B527A;border-color:#1B527A;font-weight:600;height:44px">
+                    Đăng ký
+                </Button>
+            </FormItem>
+        </Form>
 
-    <FormItem Label="Email" Required>
-        <Input @bind-Value="model.Email" Placeholder="Email" />
-    </FormItem>
-
-    <FormItem Label="Full name">
-        <Input @bind-Value="model.FullName" Placeholder="Full name" />
-    </FormItem>
-
-    <FormItem Label="Password" Required>
-        <Input Type="InputType.Password" @bind-Value="model.Password" Placeholder="Password" />
-    </FormItem>
-
-    <FormItem Label="Confirm" Required>
-        <Input Type="InputType.Password" @bind-Value="model.ConfirmPassword" Placeholder="Confirm password" />
-    </FormItem>
-
-    <FormItem WrapperColOffset="6" WrapperColSpan="14">
-        <Button Type="ButtonType.Primary" HtmlType="submit">Register</Button>
-        <Button OnClick="GoToLogin" Style="margin-left:8px">Go to Login</Button>
-    </FormItem>
-</Form>
+        <div class="auth-footer">
+            Đã có tài khoản?
+            <a href="/login">Đăng nhập</a>
+        </div>
+    </div>
+</div>
 
 @code {
-    private RegisterEditModel model = new RegisterEditModel();
-
-    private void GoToLogin()
-    {
-        Navigation.NavigateTo("/login");
-    }
+    private RegisterEditModel _model = new();
 
     private async Task OnFinish()
     {
-        if (string.IsNullOrWhiteSpace(model.Password) || model.Password != model.ConfirmPassword)
+        if (string.IsNullOrWhiteSpace(_model.Password) || _model.Password != _model.ConfirmPassword)
         {
-            Message.Error("Passwords do not match");
+            await Message.ErrorAsync("Mật khẩu xác nhận không khớp");
             return;
         }
 
         try
         {
-            var result = await AuthRepository.Register(model);
+            var result = await AuthRepository.Register(_model);
             if (result.Succeeded)
             {
-                Message.Success("Registration successful. Please check your email to confirm your account.");
+                await Message.SuccessAsync("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản.");
                 Navigation.NavigateTo("/login");
             }
             else
             {
                 var errors = string.Join("; ", result.Errors.Select(e => e.Description));
-                Message.Error($"Registration failed: {errors}");
+                await Message.ErrorAsync($"Đăng ký thất bại: {errors}");
             }
         }
         catch (Exception ex)
         {
-            Message.Error($"Registration error: {ex.Message}");
+            await Message.ErrorAsync($"Lỗi: {ex.Message}");
         }
     }
 }

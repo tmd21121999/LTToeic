@@ -1,12 +1,7 @@
 @inherits LayoutComponentBase
 
-<div class="app-layout">
-    <NavMenu />
-    <main class="main-content">
-        <div class="page-wrapper">
-            @Body
-        </div>
-    </main>
+<div class="test-layout-shell">
+    @Body
 </div>
 
 <div id="blazor-error-ui">
@@ -16,3 +11,12 @@
 </div>
 
 <AntDesign.AntContainer />
+
+<style>
+    .test-layout-shell {
+        min-height: 100vh;
+        background: #f5f7fa;
+        display: flex;
+        flex-direction: column;
+    }
+</style>

@@ -2,100 +2,56 @@
 @rendermode InteractiveServer
 @inject ITestService TestService
 @inject NavigationManager Nav
+@inject MessageService Message
 
-<PageTitle>Đề thi Online - LT TOEIC</PageTitle>
+<PageTitle>Thư viện đề thi - LTToeic</PageTitle>
 
-<div style="max-width:900px;margin:0 auto;padding:24px 16px">
-    <h2 style="font-size:22px;font-weight:700;margin-bottom:4px">Đề thi Online</h2>
-    <p style="color:#888;margin-bottom:20px">Chọn đề thi để bắt đầu luyện tập</p>
+<h1 class="library-heading">Thư viện đề thi</h1>
+<hr class="library-separator" />
 
-    @if (_loading)
-    {
-        <Spin Tip="Đang tải..." />
-    }
-    else if (!_tests.Any())
-    {
-        <div style="text-align:center;padding:32px;color:#aaa">Chưa có đề thi nào</div>
-    }
-    else
-    {
-        <div class="tl-grid">
-            @foreach (var test in _tests)
-            {
-                <div class="tl-card">
-                    <div class="tl-card-title">@test.Title</div>
-                    <div class="tl-card-meta">
-                        @if (!string.IsNullOrEmpty(test.CategoryName))
-                        {
-                            <Tag Color="@("blue")">@test.CategoryName</Tag>
-                        }
-                        <span class="tl-meta-item">
-                            <Icon Type="clock-circle" />
-                            @test.Duration phút
-                        </span>
-                        <span class="tl-meta-item">
-                            <Icon Type="ordered-list" />
-                            @test.TotalQuestions câu
-                        </span>
-                    </div>
-                    <Button Type="@ButtonType.Primary" Block OnClick="() => StartTest(test.Id)">
-                        Bắt đầu thi
-                    </Button>
-                </div>
-            }
-        </div>
-    }
+<div class="search-row">
+    <input class="search-input-field"
+           placeholder="Tìm kiếm đề thi..."
+           @bind="_searchText"
+           @bind:event="oninput"
+           @onkeyup="OnSearchKeyUp" />
+    <Button Type="ButtonType.Primary" Class="search-btn" OnClick="FilterTests">Tìm kiếm</Button>
 </div>
 
-<style>
-    .tl-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 16px;
-    }
-
-    .tl-card {
-        background: #fff;
-        border: 1px solid #e8e8e8;
-        border-radius: 10px;
-        padding: 18px;
-        box-shadow: 0 1px 4px rgba(0,0,0,.06);
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        transition: box-shadow .2s;
-    }
-
-    .tl-card:hover {
-        box-shadow: 0 4px 16px rgba(22,119,255,.15);
-        border-color: #91caff;
-    }
-
-    .tl-card-title {
-        font-size: 15px;
-        font-weight: 600;
-        color: #222;
-        line-height: 1.4;
-    }
-
-    .tl-card-meta {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .tl-meta-item {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 13px;
-        color: #666;
-    }
-</style>
+@if (_loading)
+{
+    <div class="loading-center"><Spin /></div>
+}
+else if (_filtered.Count == 0)
+{
+    <div class="empty-state">Không có đề thi nào phù hợp</div>
+}
+else
+{
+    <div class="test-grid">
+        @foreach (var test in _filtered)
+        {
+            <div class="test-card">
+                <div class="test-card-info">
+                    <div class="test-card-title">@test.Title</div>
+                    <div class="test-card-meta">
+                        <Icon Type="clock-circle" Theme="IconThemeType.Outline" />
+                        @test.Duration phút &nbsp;|&nbsp; @test.TotalQuestions câu
+                    </div>
+                </div>
+                <Button Type="ButtonType.Primary" Class="btn-lam-bai"
+                        OnClick='() => Nav.NavigateTo($"/luyen-thi/{test.Id}")'>
+                    Làm bài
+                </Button>
+            </div>
+        }
+    </div>
+}
 
 @code {
-    private List<TestViewModel> _tests = [];
+    private List<TestViewModel> _all = [];
+    private List<TestViewModel> _filtered = [];
+    private string _searchText = "";
     private bool _loading = true;
 
     protected override async Task OnInitializedAsync()
@@ -103,11 +59,12 @@
         try
         {
             var all = await TestService.GetAllAsync();
-            _tests = all.Where(t => t.Status == TestStatus.Active).ToList();
+            _all = all.Where(t => t.Status == TestStatus.Active).ToList();
+            _filtered = _all;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Lỗi tải danh sách đề thi: {ex.Message}");
+            await Message.ErrorAsync($"Lỗi tải danh sách đề thi: {ex.Message}");
         }
         finally
         {
@@ -115,8 +72,15 @@
         }
     }
 
-    private void StartTest(long testId)
+    private void FilterTests()
     {
-        Nav.NavigateTo($"/luyen-thi/{testId}");
+        _filtered = string.IsNullOrWhiteSpace(_searchText)
+            ? _all
+            : _all.Where(t => t.Title.Contains(_searchText, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+    private void OnSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") FilterTests();
     }
 }

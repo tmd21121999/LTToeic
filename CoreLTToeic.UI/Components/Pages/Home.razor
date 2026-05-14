@@ -1,91 +1,42 @@
 @page "/"
-@inject ITestService TestService
 @inject NavigationManager Nav
 
-<div class="test-library-page">
-    <div class="library-header">
-        <h2 class="library-title">Thư viện đề thi TOEIC</h2>
-        <p class="library-subtitle">Luyện tập với kho đề thi cập nhật liên tục theo định dạng mới nhất</p>
-        <div class="search-row">
-            <AntDesign.Input Placeholder="Nhập tên đề thi hoặc từ khóa..."
-                             @bind-Value="_searchText"
-                             Class="search-input" />
-            <Button Type="ButtonType.Primary" Icon="@("search")" Class="search-btn" OnClick="FilterTests">Tìm kiếm</Button>
+<PageTitle>LTToeic - Hệ Thống Luyện Thi TOEIC</PageTitle>
+
+<div>
+    <h1 class="structure-heading">Cấu Trúc Bài Thi TOEIC Mới</h1>
+    <hr class="structure-separator" />
+
+    <div class="structure-grid">
+        <div>
+            <div class="structure-section-title">
+                <Icon Type="customer-service" Theme="IconThemeType.Outline" />
+                Listening (45 Phút)
+            </div>
+            <div class="structure-part-list">
+                <div class="structure-part-item">Part 1: Photographs (6 câu)</div>
+                <div class="structure-part-item">Part 2: Question-Response (25 câu)</div>
+                <div class="structure-part-item">Part 3: Conversations (39 câu)</div>
+                <div class="structure-part-item">Part 4: Short Talks (30 câu)</div>
+            </div>
         </div>
-        <div class="filter-chips">
-            <button class="@GetChipClass(null)" @onclick='() => SetPartFilter(null)'>Tất cả bài thi</button>
-            @for (int i = 1; i <= 7; i++)
-            {
-                var part = i;
-                <button class="@GetChipClass(part)" @onclick='() => SetPartFilter(part)'>Part @part</button>
-            }
+        <div>
+            <div class="structure-section-title">
+                <Icon Type="read" Theme="IconThemeType.Outline" />
+                Reading (75 Phút)
+            </div>
+            <div class="structure-part-list">
+                <div class="structure-part-item">Part 5: Incomplete Sentences (30 câu)</div>
+                <div class="structure-part-item">Part 6: Text Completion (16 câu)</div>
+                <div class="structure-part-item">Part 7: Reading Comprehension (54 câu)</div>
+            </div>
         </div>
     </div>
 
-    @if (_loading)
-    {
-        <div class="loading-center"><Spin /></div>
-    }
-    else if (_filtered.Count == 0)
-    {
-        <div class="empty-state">
-            <p style="color:#5a7090;font-size:1rem">Không có đề thi nào</p>
-        </div>
-    }
-    else
-    {
-        <div class="test-grid">
-            @foreach (var test in _filtered)
-            {
-                <div class="test-card">
-                    <div class="test-card-icon">
-                        <Icon Type="@("file-text")" Theme="IconThemeType.Outline" />
-                    </div>
-                    <div class="test-card-info">
-                        <div class="test-card-title">@test.Title</div>
-                        <div class="test-card-meta">
-                            @test.Duration phút • @test.TotalQuestions câu hỏi • @test.AttemptCount lượt làm
-                        </div>
-                    </div>
-                    <Button Type="ButtonType.Primary" Class="btn-lam-bai"
-                            OnClick='() => Nav.NavigateTo($"/thi/{test.Id}")'>
-                        Làm bài
-                    </Button>
-                </div>
-            }
-        </div>
-    }
+    <div class="structure-cta">
+        <Button Type="ButtonType.Primary" Class="btn-primary" OnClick="@(() => Nav.NavigateTo("/luyen-thi"))">
+            <Icon Type="right-circle" Theme="IconThemeType.Outline" />
+            Bắt đầu luyện thi
+        </Button>
+    </div>
 </div>
-
-@code {
-    private List<TestViewModel> _all = new();
-    private List<TestViewModel> _filtered = new();
-    private string _searchText = "";
-    private int? _partFilter = null;
-    private bool _loading = true;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var tests = await TestService.GetAllAsync();
-        _all = tests.ToList();
-        _filtered = _all;
-        _loading = false;
-    }
-
-    private void SetPartFilter(int? part)
-    {
-        _partFilter = part;
-        FilterTests();
-    }
-
-    private void FilterTests()
-    {
-        _filtered = _all
-            .Where(t => string.IsNullOrWhiteSpace(_searchText) ||
-                        t.Title.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-    }
-
-    private string GetChipClass(int? part) =>
-        _partFilter == part ? "chip chip-active" : "chip";
-}

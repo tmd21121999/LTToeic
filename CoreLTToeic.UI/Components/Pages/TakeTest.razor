@@ -1,4 +1,5 @@
 @page "/luyen-thi/{TestId:long}"
+@layout TestLayout
 @rendermode InteractiveServer
 @implements IDisposable
 @inject ITestService TestService
@@ -12,48 +13,53 @@
 
 @if (_loading)
 {
-    <div style="display:flex;align-items:center;justify-content:center;height:60vh">
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh">
         <Spin Tip="Đang tải đề thi..." />
     </div>
 }
 else if (_test == null)
 {
-    <div style="text-align:center;padding:48px 16px;color:#888">
-        <Icon Type="file-unknown" Style="font-size:48px;margin-bottom:12px" />
+    <div style="text-align:center;padding:80px 16px;color:#888">
+        <Icon Type="file-unknown" Style="font-size:48px;margin-bottom:12px;display:block" />
         <p>Không tìm thấy đề thi</p>
     </div>
 }
 else
 {
     <div class="tt-root">
-        <!-- Top bar -->
+        <!-- Top bar: Brand | Timer | Submit -->
         <div class="tt-topbar">
-            <div class="tt-parts-nav">
-                @foreach (var part in _parts)
-                {
-                    <button class="tt-part-btn" @onclick="() => ScrollToPart(part.Id)">
-                        Part @((int)part.PartNum)
-                    </button>
-                }
-            </div>
-            <div class="tt-topbar-right">
-                @if (!_isViewResult)
-                {
-                    <div class="tt-timer @(_remainingSeconds <= 300 ? "tt-timer-urgent" : "")">
-                        <Icon Type="clock-circle" />
-                        @FormatTime(_remainingSeconds)
-                    </div>
-                    <Button Type="@ButtonType.Primary" Danger OnClick="ConfirmSubmit" Loading="_submitting">
-                        Nộp bài
-                    </Button>
-                }
-                else
-                {
-                    <Button Type="@ButtonType.Default" OnClick="@(() => Nav.NavigateTo("/luyen-thi"))">
-                        <Icon Type="arrow-left" /> Đề thi khác
-                    </Button>
-                }
-            </div>
+            <span class="tt-brand">LTToeic Practice</span>
+
+            @if (!_isViewResult)
+            {
+                <div class="tt-timer @(_remainingSeconds <= 300 ? "tt-timer-urgent" : "")">
+                    Thời gian còn lại: @FormatTime(_remainingSeconds)
+                </div>
+                <Button Type="@ButtonType.Primary" Class="tt-submit-btn"
+                        OnClick="ConfirmSubmit" Loading="_submitting">
+                    Nộp bài
+                </Button>
+            }
+            else
+            {
+                <div class="tt-topbar-spacer"></div>
+                <Button Type="@ButtonType.Default" Class="tt-back-btn"
+                        OnClick="@(() => Nav.NavigateTo("/luyen-thi"))">
+                    <Icon Type="arrow-left" /> Đề thi khác
+                </Button>
+            }
+        </div>
+
+        <!-- Part tabs -->
+        <div class="tt-part-tabs">
+            @foreach (var part in _parts)
+            {
+                <button class="tt-tab-btn @(_activePartId == part.Id ? "tt-tab-active" : "")"
+                        @onclick="() => SelectPart(part.Id)">
+                    Part @((int)part.PartNum)
+                </button>
+            }
         </div>
 
         <!-- Result banner -->
@@ -62,7 +68,7 @@ else
             <div class="tt-result-banner">
                 <div class="tt-result-score">
                     <span class="tt-score-total">@_result.TotalScore<span class="tt-score-max">/990</span></span>
-                    <span class="tt-score-label">Tổng điểm</span>
+                    <span class="tt-score-label">TỔNG ĐIỂM</span>
                 </div>
                 <div class="tt-result-details">
                     <div class="tt-result-item">
@@ -98,18 +104,13 @@ else
             </div>
         }
 
-        <!-- Main content: questions + answer sheet -->
+        <!-- Main: questions + answer sheet -->
         <div class="tt-body">
             <div class="tt-questions">
                 @foreach (var part in _parts)
                 {
-                    var standalones = _standaloneQuestions
-                        .Where(q => q.PartId == part.Id)
-                        .ToList();
-                    var groups = _allGroups
-                        .Where(g => g.PartId == part.Id)
-                        .ToList();
-
+                    var standalones = _standaloneQuestions.Where(q => q.PartId == part.Id).ToList();
+                    var groups = _allGroups.Where(g => g.PartId == part.Id).ToList();
                     if (!standalones.Any() && !groups.Any()) continue;
 
                     <TestPartSection
@@ -141,61 +142,42 @@ else
     .tt-root {
         display: flex;
         flex-direction: column;
-        height: 100%;
+        min-height: 100vh;
+        background: #f5f7fa;
     }
 
+    /* Top bar: 3-column grid */
     .tt-topbar {
         position: sticky;
         top: 0;
         z-index: 100;
         background: #fff;
         border-bottom: 1px solid #e8e8e8;
-        display: flex;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
         align-items: center;
-        justify-content: space-between;
-        padding: 8px 16px;
-        gap: 12px;
+        padding: 0 24px;
+        height: 56px;
         box-shadow: 0 2px 6px rgba(0,0,0,.06);
     }
 
-    .tt-parts-nav {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
+    .tt-brand {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1B527A;
+        white-space: nowrap;
     }
 
-    .tt-part-btn {
-        padding: 4px 12px;
-        border: 1px solid #d9d9d9;
-        border-radius: 4px;
-        background: #fafafa;
-        font-size: 13px;
-        cursor: pointer;
-        color: #333;
-        transition: border-color .15s, background .15s;
-    }
-
-    .tt-part-btn:hover {
-        border-color: #1677ff;
-        color: #1677ff;
-        background: #e6f4ff;
-    }
-
-    .tt-topbar-right {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-shrink: 0;
+    .tt-topbar-spacer {
+        /* placeholder when viewing results */
     }
 
     .tt-timer {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
-        color: #1677ff;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        min-width: 90px;
+        color: #1B527A;
+        text-align: center;
+        white-space: nowrap;
     }
 
     .tt-timer.tt-timer-urgent {
@@ -208,14 +190,64 @@ else
         50% { opacity: .5; }
     }
 
+    .tt-submit-btn {
+        justify-self: end;
+        background: #1B527A !important;
+        border-color: #1B527A !important;
+        font-weight: 600 !important;
+    }
+
+    .tt-submit-btn:hover {
+        background: #154060 !important;
+        border-color: #154060 !important;
+    }
+
+    .tt-back-btn {
+        justify-self: end;
+    }
+
+    /* Part tabs bar */
+    .tt-part-tabs {
+        position: sticky;
+        top: 56px;
+        z-index: 99;
+        background: #fff;
+        border-bottom: 1px solid #e8e8e8;
+        display: flex;
+        padding: 0 16px;
+    }
+
+    .tt-tab-btn {
+        padding: 10px 18px;
+        border: none;
+        border-bottom: 2px solid transparent;
+        background: none;
+        cursor: pointer;
+        font-size: 14px;
+        color: #666;
+        margin-bottom: -1px;
+        transition: color 0.15s, border-color 0.15s;
+        white-space: nowrap;
+    }
+
+    .tt-tab-btn:hover {
+        color: #1B527A;
+    }
+
+    .tt-tab-btn.tt-tab-active {
+        color: #1B527A;
+        font-weight: 700;
+        border-bottom-color: #1B527A;
+    }
+
+    /* Result banner */
     .tt-result-banner {
         display: flex;
         align-items: center;
         gap: 24px;
-        background: linear-gradient(135deg, #1677ff 0%, #4096ff 100%);
+        background: linear-gradient(135deg, #1B527A 0%, #2471A3 100%);
         color: #fff;
         padding: 16px 24px;
-        border-bottom: 1px solid #d6e4ff;
         flex-wrap: wrap;
     }
 
@@ -239,11 +271,10 @@ else
     }
 
     .tt-score-label {
-        font-size: 11px;
-        opacity: .8;
-        text-transform: uppercase;
-        letter-spacing: .5px;
-        margin-top: 2px;
+        font-size: 10px;
+        opacity: .75;
+        letter-spacing: 1px;
+        margin-top: 3px;
     }
 
     .tt-result-details {
@@ -280,6 +311,7 @@ else
         background: rgba(255,255,255,.3);
     }
 
+    /* Body: questions + answer sheet */
     .tt-body {
         display: flex;
         gap: 16px;
@@ -294,8 +326,10 @@ else
     }
 
     .tt-sheet-col {
-        width: 220px;
+        width: 240px;
         flex-shrink: 0;
+        position: sticky;
+        top: 112px;
     }
 </style>
 
@@ -312,12 +346,13 @@ else
     private List<(long QuestionId, int Number)> _questionIndex = [];
     private Dictionary<long, HashSet<long>> _partQuestionIds = new();
     private Dictionary<long, string> _correctAnswers = new();
-    private Dictionary<long, long> _questionPartId = new(); // questionId → partId
+    private Dictionary<long, long> _questionPartId = new();
 
     private UserResultViewModel? _result;
     private bool _isViewResult;
     private bool _loading = true;
     private bool _submitting;
+    private long _activePartId;
 
     private int _remainingSeconds;
     private System.Threading.Timer? _timer;
@@ -340,12 +375,12 @@ else
             var allQuestions = (await questionsTask).ToList();
             _allGroups = (await groupsTask).ToList();
 
-            // Standalone = questions not in any group
             _standaloneQuestions = allQuestions.Where(q => q.QuestionGroupId == null).ToList();
 
             BuildQuestionIndex(allQuestions);
 
             _remainingSeconds = (_test.Duration > 0 ? _test.Duration : 120) * 60;
+            if (_parts.Any()) _activePartId = _parts.First().Id;
             StartTimer();
         }
         catch (Exception ex)
@@ -372,20 +407,16 @@ else
         {
             var partQIds = new HashSet<long>();
 
-            // Groups for this part, sorted by min question OrderNumber
             var partGroups = _allGroups
                 .Where(g => g.PartId == part.Id)
                 .OrderBy(g => g.Questions.Count > 0 ? g.Questions.Min(q => q.OrderNumber) : int.MaxValue)
                 .ToList();
 
-            // Standalone questions for this part
             var partStandalone = _standaloneQuestions
                 .Where(q => q.PartId == part.Id)
                 .OrderBy(q => q.OrderNumber)
                 .ToList();
 
-            // Build merged ordered list (group questions + standalone by OrderNumber)
-            // Group = gets the minOrderNumber of its children; standalone = their own OrderNumber
             var allPartItems = new List<(int sortKey, long questionId, string? correctAnswer)>();
 
             foreach (var g in partGroups)
@@ -463,13 +494,11 @@ else
 
             if (string.IsNullOrEmpty(userId))
             {
-                // Guest: tính kết quả locally, không lưu DB
                 _result = CalculateLocalResult(completionTime);
                 await SaveGuestResultToLocalStorage(_result);
             }
             else
             {
-                // Đã đăng nhập: lưu DB
                 var model = new UserResultEditModel
                 {
                     TestId = TestId,
@@ -569,15 +598,18 @@ else
             var json = System.Text.Json.JsonSerializer.Serialize(result);
             await JS.InvokeVoidAsync("localStorage.setItem", $"ltoeic_result_{TestId}", json);
         }
-        catch
-        {
-            // localStorage không khả dụng (private browsing...) — bỏ qua
-        }
+        catch { }
     }
 
     private void HandleAnswer((long QuestionId, string Answer) evt)
     {
         _userAnswers[evt.QuestionId] = evt.Answer;
+    }
+
+    private async Task SelectPart(long partId)
+    {
+        _activePartId = partId;
+        await ScrollToPart(partId);
     }
 
     private async Task ScrollToQuestion(int number)

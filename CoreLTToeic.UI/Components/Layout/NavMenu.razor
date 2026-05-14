@@ -1,27 +1,50 @@
-<div class="sidebar-brand">
-    <a href="/">LT TOEIC</a>
-</div>
+@using Microsoft.AspNetCore.Identity
+@inject AuthenticationStateProvider AuthStateProvider
+@inject SignInManager<AppUser> SignInManager
+@inject NavigationManager Nav
 
-<nav class="sidebar-nav">
-    <div class="nav-section-label">Học viên</div>
-    <NavLink class="nav-item" href="/luyen-thi">
-        <Icon Type="@("read")" Theme="IconThemeType.Outline" />
-        <span>Đề thi Online</span>
-    </NavLink>
+<header class="top-navbar">
+    <a class="nav-brand" href="/">LTToeic</a>
+    <nav class="nav-links">
+        <NavLink href="/" Match="NavLinkMatch.All">Trang chủ</NavLink>
+        <NavLink href="/luyen-thi">Đề thi Online</NavLink>
+        <span class="nav-link-disabled">Khóa học</span>
+        <span class="nav-link-disabled">Tài liệu</span>
+    </nav>
+    <div class="nav-user">
+        @if (_isLoggedIn)
+        {
+            <span class="nav-user-name">@_displayName</span>
+            <button class="nav-logout-btn" @onclick="Logout">Đăng xuất</button>
+        }
+        else
+        {
+            <a href="/login" class="nav-user-icon" title="Đăng nhập">
+                <Icon Type="user" Theme="IconThemeType.Outline" />
+            </a>
+        }
+    </div>
+</header>
 
-    <div class="nav-section-label" style="margin-top:16px">Quản trị</div>
-    <NavLink class="nav-item" href="/admin/quan-li-de-thi">
-        <Icon Type="@("file-text")" Theme="IconThemeType.Outline" />
-        <span>Quản lý đề thi</span>
-    </NavLink>
+@code {
+    private bool _isLoggedIn;
+    private string _displayName = "";
 
-    <div class="nav-divider"></div>
-    <NavLink class="nav-item" href="/login">
-        <Icon Type="@("user")" Theme="IconThemeType.Outline" />
-        <span>Đăng nhập</span>
-    </NavLink>
-    <NavLink class="nav-item" href="/register">
-        <Icon Type="@("user-add")" Theme="IconThemeType.Outline" />
-        <span>Đăng ký</span>
-    </NavLink>
-</nav>
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateProvider.GetAuthenticationStateAsync();
+        _isLoggedIn = state.User.Identity?.IsAuthenticated ?? false;
+        if (_isLoggedIn)
+        {
+            _displayName = state.User.FindFirst("FullName")?.Value
+                           ?? state.User.Identity?.Name
+                           ?? "Người dùng";
+        }
+    }
+
+    private async Task Logout()
+    {
+        await SignInManager.SignOutAsync();
+        Nav.NavigateTo("/", forceLoad: true);
+    }
+}
