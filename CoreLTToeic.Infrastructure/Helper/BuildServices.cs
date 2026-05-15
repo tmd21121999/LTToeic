@@ -1,5 +1,6 @@
 using CoreLTToeic.Application.Business;
 using CoreLTToeic.Application.Interfaces.IService;
+using CoreLTToeic.Infrastructure.Data.Seeders;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CoreLTToeic.Infrastructure.Helper
@@ -10,6 +11,7 @@ namespace CoreLTToeic.Infrastructure.Helper
         {
             services.AddScoped<ITestService, TestService>();
             services.AddScoped<IUserResultService, UserResultService>();
+            services.AddScoped<ToeicTestSeeder>();
         }
     }
 }

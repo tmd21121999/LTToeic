@@ -11,7 +11,7 @@
         <div class="tqg-images">
             @foreach (var img in Group.Images.Where(i => !string.IsNullOrEmpty(i)))
             {
-                <img src="@img" alt="img" class="tqg-image" />
+                <img src="@ResolveImage(img)" alt="img" class="tqg-image" />
             }
         </div>
     }
@@ -47,13 +47,15 @@
     .tqg-images {
         display: flex;
         flex-wrap: wrap;
+        justify-content: center;
         gap: 8px;
         margin-bottom: 10px;
     }
 
     .tqg-image {
+        min-height: 160px;
+        max-height: 320px;
         max-width: 100%;
-        max-height: 200px;
         border-radius: 6px;
         object-fit: contain;
     }
@@ -88,5 +90,12 @@
     private async Task HandleAnswer(long questionId, string answer)
     {
         await OnAnswerSelected.InvokeAsync((questionId, answer));
+    }
+
+    private static string ResolveImage(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return string.Empty;
+        if (url.StartsWith("http://") || url.StartsWith("https://")) return url;
+        return "https://storage.googleapis.com/" + url.TrimStart('/');
     }
 }

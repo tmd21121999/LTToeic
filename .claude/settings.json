@@ -20,7 +20,8 @@
       "PowerShell(dotnet ef *)",
       "PowerShell(dotnet test *)",
       "PowerShell(Get-Content *)",
-      "PowerShell(Get-Process *)"
+      "PowerShell(Get-Process *)",
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"c:\\\\Project\\\\LTToeic\\\\CoreLTToeic.UI\\\\SeedData\")"
     ]
   }
 }
