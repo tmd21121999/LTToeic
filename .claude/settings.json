@@ -21,7 +21,9 @@
       "PowerShell(dotnet test *)",
       "PowerShell(Get-Content *)",
       "PowerShell(Get-Process *)",
-      "PowerShell(New-Item -ItemType Directory -Force -Path \"c:\\\\Project\\\\LTToeic\\\\CoreLTToeic.UI\\\\SeedData\")"
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"c:\\\\Project\\\\LTToeic\\\\CoreLTToeic.UI\\\\SeedData\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Project\\\\LTToeic\" -Directory)",
+      "Bash(Select-Object Name)"
     ]
   }
 }

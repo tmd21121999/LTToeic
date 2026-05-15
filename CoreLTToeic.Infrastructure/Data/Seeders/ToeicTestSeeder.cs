@@ -143,7 +143,7 @@ public class ToeicTestSeeder
             .OrderBy(ExtractLabel)
             .ToList();
 
-        var correctLabel = answer.Texts.Count > 0 ? $"({ExtractLabel(answer.Texts[0])})" : null;
+        var correctLabel = answer.Texts.Count > 0 ? ExtractLabel(answer.Texts[0]) : null;
 
         return (
             all.Count > 0 ? ExtractText(all[0]) : null,
