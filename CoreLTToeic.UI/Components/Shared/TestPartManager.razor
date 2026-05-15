@@ -19,23 +19,23 @@ else if (_parts.Count == 0)
 else
 {
     <Table DataSource="_parts" TItem="PartViewModel" Size="TableSize.Small" Bordered>
-        <ActionColumn Title="Part" Width="100">
+        <PropertyColumn Property="c => c.PartNum" Title="Part" Width="100">
             <Tag Color="@("blue")">Part @((int)context.PartNum)</Tag>
-        </ActionColumn>
+        </PropertyColumn>
         <PropertyColumn Property="c => c.Content" Title="Mô tả" Ellipsis />
-        <ActionColumn Title="Câu hỏi đơn" Width="110">
+        <PropertyColumn Property="c => c.QuestionCount" Title="Câu hỏi đơn" Width="110">
             <Tag>@context.QuestionCount câu</Tag>
-        </ActionColumn>
-        <ActionColumn Title="Nhóm câu hỏi" Width="120">
+        </PropertyColumn>
+        <PropertyColumn Property="c => c.QuestionGroupCount" Title="Nhóm câu hỏi" Width="120">
             <Tag>@context.QuestionGroupCount nhóm</Tag>
-        </ActionColumn>
+        </PropertyColumn>
         <ActionColumn Title="Thao tác" Width="130">
             <Space>
                 <SpaceItem>
                     <Button Size="ButtonSize.Small" Icon="edit" OnClick="() => OpenEditPart(context)">Sửa</Button>
                 </SpaceItem>
                 <SpaceItem>
-                    <Button Size="ButtonSize.Small" Danger Icon="delete" OnClick="() => DeletePart(context.Id)">Xoá</Button>
+                    <Button Size="ButtonSize.Small" Danger OnClick="() => DeletePart(context.Id)">Xoá</Button>
                 </SpaceItem>
             </Space>
         </ActionColumn>
