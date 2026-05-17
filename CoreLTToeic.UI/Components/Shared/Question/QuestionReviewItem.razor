@@ -60,6 +60,24 @@
             </Tag>
         }
     </div>
+
+    @if (!string.IsNullOrEmpty(Answer.Transcript))
+    {
+        <Collapse Style="margin-top:12px;" Bordered="false">
+            <Panel Header="Transcript" Key="transcript">
+                <div style="color:#434343;">@((MarkupString)(Answer.Transcript ?? ""))</div>
+            </Panel>
+        </Collapse>
+    }
+
+    @if (!string.IsNullOrEmpty(Answer.Explanation))
+    {
+        <Alert Type="@AlertType.Info"
+               Style="margin-top:10px;"
+               Message="Giải thích"
+               Description="@Answer.Explanation"
+               ShowIcon="true" />
+    }
 </Card>
 
 @code {

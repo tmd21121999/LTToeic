@@ -3,6 +3,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject IAuthRepository AuthRepository
+@inject IUserResultService UserResultService
 @inject MessageService Message
 
 <header class="top-navbar">
@@ -10,6 +11,10 @@
     <nav class="nav-links">
         <NavLink href="/" Match="NavLinkMatch.All">Trang chủ</NavLink>
         <NavLink href="/luyen-thi">Đề thi Online</NavLink>
+        @if (_isLoggedIn)
+        {
+            <NavLink href="/tong-quan">Tổng quan</NavLink>
+        }
         <span class="nav-link-disabled">Khóa học</span>
         <span class="nav-link-disabled">Tài liệu</span>
     </nav>
@@ -22,6 +27,10 @@
                         <MenuItem Key="profile" OnClick="@(async () => await OpenProfileDrawer())">
                             <Icon Type="user" Theme="IconThemeType.Outline" />
                             <span>Thiết lập hồ sơ</span>
+                        </MenuItem>
+                        <MenuItem Key="history" OnClick="@(async () => await OpenHistoryDrawer())">
+                            <Icon Type="history" Theme="IconThemeType.Outline" />
+                            <span>Lịch sử thi</span>
                         </MenuItem>
                         <MenuItem Key="password" OnClick="@(() => OpenPasswordDrawer())">
                             <Icon Type="lock" Theme="IconThemeType.Outline" />
@@ -94,6 +103,22 @@
     </Form>
 </Drawer>
 
+<Drawer Visible="_historyDrawerOpen"
+        Title="@("Lịch sử thi")"
+        Width="900"
+        OnClose="CloseDrawers">
+    @if (_historyLoading)
+    {
+        <div style="text-align:center; padding:48px 0;">
+            <Spin Tip="Đang tải..." />
+        </div>
+    }
+    else
+    {
+        <ExamHistoryTable Results="_historyResults" />
+    }
+</Drawer>
+
 @code {
     private bool _isLoggedIn;
     private string _displayName = "";
@@ -101,10 +126,13 @@
 
     private bool _profileDrawerOpen;
     private bool _passwordDrawerOpen;
+    private bool _historyDrawerOpen;
+    private bool _historyLoading;
     private bool _saving;
 
     private UpdateProfileEditModel _profileModel = new();
     private ChangePasswordModel _passwordModel = new();
+    private List<UserResultViewModel> _historyResults = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -142,6 +170,25 @@
         _profileDrawerOpen = true;
     }
 
+    private async Task OpenHistoryDrawer()
+    {
+        _historyDrawerOpen = true;
+        _historyLoading = true;
+        try
+        {
+            var data = await UserResultService.GetByUserIdAsync(_userId);
+            _historyResults = data.ToList();
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi tải lịch sử: {ex.Message}");
+        }
+        finally
+        {
+            _historyLoading = false;
+        }
+    }
+
     private void OpenPasswordDrawer()
     {
         _passwordModel = new ChangePasswordModel();
@@ -152,6 +199,7 @@
     {
         _profileDrawerOpen = false;
         _passwordDrawerOpen = false;
+        _historyDrawerOpen = false;
     }
 
     private async Task SaveProfile()

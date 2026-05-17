@@ -3,9 +3,101 @@
 @attribute [Authorize(Roles = "Admin")]
 @inject NavigationManager Nav
 
-@code {
-    protected override void OnInitialized()
-    {
-        Nav.NavigateTo("/admin/quan-li-de-thi", replace: true);
-    }
-}
+<PageTitle>Tổng quan — LTToeic Admin</PageTitle>
+
+<div style="padding:8px 0 24px;">
+    <h2 style="margin:0 0 4px;">Tổng quan hệ thống</h2>
+    <span style="color:#8c8c8c;">Chào mừng trở lại bảng điều khiển LTToeic</span>
+</div>
+
+<Row Gutter="(16, 16)" Style="margin-bottom:24px;">
+    <AntDesign.Col Xs="24" Sm="12" Md="6">
+        <Card Hoverable Bordered Style="border-radius:12px; cursor:pointer;"
+              OnClick='() => Nav.NavigateTo("/admin/quan-li-de-thi")'>
+            <div style="display:flex; align-items:center; gap:16px;">
+                <div style="width:48px; height:48px; border-radius:10px; background:#e6f4ff; display:flex; align-items:center; justify-content:center;">
+                    <Icon Type="file-text" Theme="IconThemeType.Outline" Style="font-size:24px; color:#1677ff;" />
+                </div>
+                <div>
+                    <div style="font-size:0.85rem; color:#8c8c8c;">Quản lý</div>
+                    <div style="font-size:1rem; font-weight:600;">Đề thi</div>
+                </div>
+            </div>
+        </Card>
+    </AntDesign.Col>
+    <AntDesign.Col Xs="24" Sm="12" Md="6">
+        <Card Hoverable Bordered Style="border-radius:12px; cursor:pointer;"
+              OnClick='() => Nav.NavigateTo("/admin/quan-li-danh-muc")'>
+            <div style="display:flex; align-items:center; gap:16px;">
+                <div style="width:48px; height:48px; border-radius:10px; background:#f6ffed; display:flex; align-items:center; justify-content:center;">
+                    <Icon Type="appstore" Theme="IconThemeType.Outline" Style="font-size:24px; color:#52c41a;" />
+                </div>
+                <div>
+                    <div style="font-size:0.85rem; color:#8c8c8c;">Quản lý</div>
+                    <div style="font-size:1rem; font-weight:600;">Danh mục</div>
+                </div>
+            </div>
+        </Card>
+    </AntDesign.Col>
+    <AntDesign.Col Xs="24" Sm="12" Md="6">
+        <Card Hoverable Bordered Style="border-radius:12px; cursor:pointer;"
+              OnClick='() => Nav.NavigateTo("/admin/quan-li-tai-khoan")'>
+            <div style="display:flex; align-items:center; gap:16px;">
+                <div style="width:48px; height:48px; border-radius:10px; background:#fff7e6; display:flex; align-items:center; justify-content:center;">
+                    <Icon Type="team" Theme="IconThemeType.Outline" Style="font-size:24px; color:#fa8c16;" />
+                </div>
+                <div>
+                    <div style="font-size:0.85rem; color:#8c8c8c;">Quản lý</div>
+                    <div style="font-size:1rem; font-weight:600;">Tài khoản</div>
+                </div>
+            </div>
+        </Card>
+    </AntDesign.Col>
+    <AntDesign.Col Xs="24" Sm="12" Md="6">
+        <Card Hoverable Bordered Style="border-radius:12px; cursor:pointer;"
+              OnClick='() => Nav.NavigateTo("/admin/quan-li-khoa-hoc")'>
+            <div style="display:flex; align-items:center; gap:16px;">
+                <div style="width:48px; height:48px; border-radius:10px; background:#f9f0ff; display:flex; align-items:center; justify-content:center;">
+                    <Icon Type="book" Theme="IconThemeType.Outline" Style="font-size:24px; color:#722ed1;" />
+                </div>
+                <div>
+                    <div style="font-size:0.85rem; color:#8c8c8c;">Quản lý</div>
+                    <div style="font-size:1rem; font-weight:600;">Khóa học</div>
+                </div>
+            </div>
+        </Card>
+    </AntDesign.Col>
+</Row>
+
+<Row Gutter="(16, 16)">
+    <AntDesign.Col Xs="24" Md="12">
+        <Card Title="Truy cập nhanh" Bordered Style="border-radius:12px;">
+            <Button Block Icon="plus" Style="margin-bottom:8px;"
+                    OnClick='() => Nav.NavigateTo("/admin/quan-li-de-thi")'>
+                Thêm đề thi mới
+            </Button>
+            <Button Block Icon="solution" Style="margin-bottom:8px;"
+                    OnClick='() => Nav.NavigateTo("/admin/quan-li-ket-qua")'>
+                Xem kết quả thi
+            </Button>
+            <Button Block Icon="video-camera"
+                    OnClick='() => Nav.NavigateTo("/admin/quan-li-khoa-hoc")'>
+                Quản lý khóa học
+            </Button>
+        </Card>
+    </AntDesign.Col>
+    <AntDesign.Col Xs="24" Md="12">
+        <Card Title="Liên kết hữu ích" Bordered Style="border-radius:12px;">
+            <Button Block Type="ButtonType.Link" Icon="home" Style="margin-bottom:8px;"
+                    OnClick='() => Nav.NavigateTo("/")'>
+                Xem trang người dùng
+            </Button>
+            <Button Block Type="ButtonType.Link" Icon="unordered-list"
+                    OnClick='() => Nav.NavigateTo("/luyen-thi")'>
+                Danh sách đề thi
+            </Button>
+        </Card>
+    </AntDesign.Col>
+</Row>
+
+@code { }

@@ -55,7 +55,7 @@
             </div>
             @if (_transcriptOpen)
             {
-                <div class="qpreview-transcript-body">@Transcript</div>
+                <div class="qpreview-transcript-body">@((MarkupString)(Transcript ?? ""))</div>
             }
         </div>
     }

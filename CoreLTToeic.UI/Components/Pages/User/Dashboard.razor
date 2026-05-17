@@ -1,0 +1,137 @@
+@page "/tong-quan"
+@layout MainLayout
+@attribute [Authorize]
+@using System.Security.Claims
+@inject IUserResultService UserResultService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject IMessageService Message
+
+<PageTitle>Tổng quan — LTToeic</PageTitle>
+
+<div style="max-width:1100px; margin:0 auto; padding:24px 16px;">
+
+    @if (_loading)
+    {
+        <div style="text-align:center; padding:80px 0;">
+            <Spin Tip="Đang tải..." />
+        </div>
+    }
+    else
+    {
+        <div style="margin-bottom:24px;">
+            <h2 style="margin:0 0 4px;">Xin chào, @_displayName!</h2>
+            <span style="color:#8c8c8c;">Theo dõi tiến trình luyện thi TOEIC của bạn</span>
+        </div>
+
+        <!-- Stats cards -->
+        <Row Gutter="(16, 16)" Style="margin-bottom:24px;">
+            <AntDesign.Col Xs="12" Sm="12" Md="6">
+                <Card Bordered Style="text-align:center; border-radius:12px;">
+                    <Statistic Title="Tổng lượt thi"
+                               Value="@_totalAttempts"
+                               Suffix="lượt"
+                               ValueStyle="color:#1B527A; font-weight:700;" />
+                </Card>
+            </AntDesign.Col>
+            <AntDesign.Col Xs="12" Sm="12" Md="6">
+                <Card Bordered Style="text-align:center; border-radius:12px; background:linear-gradient(135deg,#1B527A,#2471A3);">
+                    <Statistic Title="Điểm cao nhất"
+                               Value="@_bestScore"
+                               Suffix="/ 990"
+                               ValueStyle="color:#fff; font-weight:700;" />
+                </Card>
+            </AntDesign.Col>
+            <AntDesign.Col Xs="12" Sm="12" Md="6">
+                <Card Bordered Style="text-align:center; border-radius:12px;">
+                    <Statistic Title="Điểm trung bình"
+                               Value="@_avgScore"
+                               Suffix="/ 990"
+                               ValueStyle="color:#2471A3; font-weight:700;" />
+                </Card>
+            </AntDesign.Col>
+            <AntDesign.Col Xs="12" Sm="12" Md="6">
+                <Card Bordered Style="text-align:center; border-radius:12px;">
+                    <Statistic Title="Thời gian học"
+                               Value="@_studyHours"
+                               Suffix="@($"g {_studyMinutesMod}ph")"
+                               ValueStyle="color:#52c41a; font-weight:700;" />
+                </Card>
+            </AntDesign.Col>
+        </Row>
+
+        <!-- Biểu đồ tiến trình -->
+        <Card Title="Tiến trình điểm" Bordered Style="border-radius:12px; margin-bottom:24px;">
+            <ScoreProgressChart Results="_results" MaxPoints="10" />
+        </Card>
+
+        <!-- 5 lần thi gần nhất -->
+        <Card Title="5 lần thi gần nhất" Bordered Style="border-radius:12px;">
+            @if (_results.Count == 0)
+            {
+                <Empty Description="@("Bạn chưa thi lần nào. Hãy bắt đầu ngay!")" >
+                    <ChildContent>
+                        <Button Type="ButtonType.Primary" OnClick='() => Nav.NavigateTo("/luyen-thi")'>
+                            Bắt đầu luyện tập
+                        </Button>
+                    </ChildContent>
+                </Empty>
+            }
+            else
+            {
+                <ExamHistoryTable Results="_recent5" Compact="true" />
+            }
+        </Card>
+    }
+</div>
+
+@code {
+    private List<UserResultViewModel> _results = [];
+    private List<UserResultViewModel> _recent5 = [];
+    private bool _loading = true;
+    private string _displayName = "bạn";
+
+    private int _totalAttempts;
+    private int _bestScore;
+    private int _avgScore;
+    private int _studyHours;
+    private int _studyMinutesMod;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var state = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+            _displayName = state.User.FindFirst("FullName")?.Value
+                           ?? state.User.Identity?.Name
+                           ?? "bạn";
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                Nav.NavigateTo("/login");
+                return;
+            }
+
+            var data = await UserResultService.GetByUserIdAsync(userId);
+            _results = data.ToList();
+            _recent5 = _results.Take(5).ToList();
+
+            _totalAttempts = _results.Count;
+            _bestScore     = _results.Any() ? _results.Max(r => r.TotalScore) : 0;
+            _avgScore      = _results.Any() ? (int)Math.Round(_results.Average(r => r.TotalScore)) : 0;
+
+            int totalSeconds = _results.Sum(r => r.CompletionTime);
+            _studyHours      = totalSeconds / 3600;
+            _studyMinutesMod = totalSeconds % 3600 / 60;
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi tải dữ liệu: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

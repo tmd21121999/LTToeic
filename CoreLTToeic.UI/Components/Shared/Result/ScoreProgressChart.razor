@@ -1,0 +1,43 @@
+@using AntDesign.Charts
+
+@if (_chartData.Length < 2)
+{
+    <Alert Type="@AlertType.Info"
+           Message="Cần ít nhất 2 lần thi để hiển thị biểu đồ tiến trình điểm."
+           ShowIcon="true" />
+}
+else
+{
+    <Line Data="@_chartData" Config="@_config" />
+}
+
+@code {
+    [Parameter] public List<UserResultViewModel> Results { get; set; } = [];
+    [Parameter] public int MaxPoints { get; set; } = 10;
+
+    private object[] _chartData = [];
+    private LineConfig _config = new();
+
+    protected override void OnParametersSet()
+    {
+        var ordered = Results.OrderBy(r => r.CompletedAt).TakeLast(MaxPoints).ToList();
+        int offset = Results.Count - ordered.Count;
+
+        _chartData = ordered.SelectMany((r, i) => new object[]
+        {
+            new { lan = $"Lần {offset + i + 1}", diem = r.ListeningScore, loai = "Listening" },
+            new { lan = $"Lần {offset + i + 1}", diem = r.ReadingScore,   loai = "Reading" },
+            new { lan = $"Lần {offset + i + 1}", diem = r.TotalScore,     loai = "Tổng điểm" }
+        }).ToArray();
+
+        _config = new LineConfig
+        {
+            XField = "lan",
+            YField = "diem",
+            SeriesField = "loai",
+            Smooth = true,
+            Legend = new Legend { Position = "top" },
+            Tooltip = new AntDesign.Charts.Tooltip { Shared = true }
+        };
+    }
+}

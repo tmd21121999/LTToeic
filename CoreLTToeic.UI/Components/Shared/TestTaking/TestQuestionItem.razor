@@ -56,7 +56,7 @@
             </div>
             @if (_transcriptOpen)
             {
-                <div class="tq-transcript-body">@Question.Transcript</div>
+                <div class="tq-transcript-body">@((MarkupString)(Question.Transcript ?? ""))</div>
             }
         </div>
     }

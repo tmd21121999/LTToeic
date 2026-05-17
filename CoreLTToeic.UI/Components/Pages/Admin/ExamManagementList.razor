@@ -228,7 +228,7 @@
                     <InputFile OnChange="OnQuestionAudioUpload" accept="audio/*" />
                 </FormItem>
                 <FormItem Label="Transcript">
-                    <TextArea @bind-Value="_editingQuestion.Transcript" Rows="2" Placeholder="Phần transcript (nếu có)" />
+                    <RichTextEditor @bind-Value="_editingQuestion.Transcript" Height="150" />
                 </FormItem>
                 <FormItem>
                     <Button Type="ButtonType.Primary" HtmlType="submit" Loading="_savingQ">Lưu câu hỏi</Button>

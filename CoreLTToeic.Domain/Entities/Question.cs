@@ -35,6 +35,8 @@ namespace CoreLTToeic.Domain.Entities
 
         public string? Transcript { get; set; }
 
+        public string? Explanation { get; set; }
+
         public long? PartId { get; set; }
         public Part? Part { get; set; }
 

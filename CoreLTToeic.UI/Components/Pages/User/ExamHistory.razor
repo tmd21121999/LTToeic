@@ -1,0 +1,64 @@
+@page "/lich-su-thi"
+@layout MainLayout
+@attribute [Authorize]
+@using System.Security.Claims
+@inject IUserResultService UserResultService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject IMessageService Message
+
+<PageTitle>Lịch sử thi — LTToeic</PageTitle>
+
+<div style="max-width:1100px; margin:0 auto; padding:24px 16px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+        <div>
+            <h2 style="margin:0 0 4px;">Lịch sử thi</h2>
+            <span style="color:#8c8c8c;">Tất cả các lần thi của bạn, mới nhất trước</span>
+        </div>
+        <Button Type="ButtonType.Primary" Icon="play-circle" OnClick='() => Nav.NavigateTo("/luyen-thi")'>
+            Làm bài thi mới
+        </Button>
+    </div>
+
+    @if (_loading)
+    {
+        <div style="text-align:center; padding:60px 0;">
+            <Spin Tip="Đang tải lịch sử..." />
+        </div>
+    }
+    else
+    {
+        <Card Bordered Style="border-radius:12px;">
+            <ExamHistoryTable Results="_results" Compact="false" />
+        </Card>
+    }
+</div>
+
+@code {
+    private List<UserResultViewModel> _results = [];
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var state = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+            if (string.IsNullOrEmpty(userId))
+            {
+                Nav.NavigateTo("/login");
+                return;
+            }
+            var data = await UserResultService.GetByUserIdAsync(userId);
+            _results = data.ToList();
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi tải dữ liệu: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

@@ -11,6 +11,8 @@ public class UserResultViewModel
     public int SkippedAnswers { get; set; }
     public int ListeningCorrects { get; set; }
     public int ReadingCorrects { get; set; }
+    public int TotalListeningQuestions { get; set; }
+    public int TotalReadingQuestions { get; set; }
     public int ListeningScore { get; set; }
     public int ReadingScore { get; set; }
     public int TotalScore { get; set; }

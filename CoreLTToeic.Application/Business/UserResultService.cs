@@ -115,6 +115,8 @@ public class UserResultService : IUserResultService
                 SkippedAnswers = skipped,
                 ListeningCorrects = listeningCorrects,
                 ReadingCorrects = readingCorrects,
+                TotalListeningQuestions = totalListening,
+                TotalReadingQuestions = totalReading,
                 ListeningScore = listeningScore,
                 ReadingScore = readingScore,
                 TotalScore = listeningScore + readingScore,

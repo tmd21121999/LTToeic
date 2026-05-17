@@ -36,6 +36,14 @@
 - Nếu không thể tạo dùng từ component, thì xem có thể dùng tailwind css class hay không, nếu không thể -> dùng css class 
 - Hạn chế dùng các tag trực tiếp từ html, ưu tiên dùng component
 
+## AntDesign 1.6.1 — Known API Constraints
+
+**`AntDesign.Statistic<T>`** does NOT have a `TitleStyle` parameter. Using it causes `InvalidOperationException` → Blazor circuit crash. Use `ValueStyle` only, or wrap the title in a separate element outside the component.
+
+**`AntDesign.Space`** does NOT accept `Direction="DirectionVHType.Vertical"` — `DirectionVHType` does not exist in this version. To stack items vertically, use `style="margin-bottom:Xpx"` on each child element instead of Space direction.
+
+**`AntDesign.Alert`** does not have a `MessageTemplate` render fragment. Use `Message="..."` and `Description="..."` string parameters only.
+
 ## Error Handling trong Blazor Components
 
 Mọi hàm `async Task` gọi service hoặc xử lý file đều phải bọc try-catch và hiển thị lỗi qua `MessageService`:

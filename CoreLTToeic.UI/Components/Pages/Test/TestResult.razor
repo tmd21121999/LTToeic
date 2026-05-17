@@ -42,7 +42,13 @@ else
 
         <TestScoreCard TotalScore="@_result.TotalScore"
                        ListeningScore="@_result.ListeningScore"
-                       ReadingScore="@_result.ReadingScore" />
+                       ReadingScore="@_result.ReadingScore"
+                       TestMode="@_result.TestMode"
+                       ListeningCorrects="@_result.ListeningCorrects"
+                       ReadingCorrects="@_result.ReadingCorrects"
+                       CorrectAnswers="@_result.CorrectAnswers"
+                       TotalListeningQuestions="@_result.TotalListeningQuestions"
+                       TotalReadingQuestions="@_result.TotalReadingQuestions" />
 
         <Card Style="margin-bottom:24px; border-radius:12px;" Bordered>
             <TestResultStats Correct="@_result.CorrectAnswers"

@@ -17,6 +17,7 @@ public class UserAnswerViewModel
     public string? Audio { get; set; }
     public string? Image { get; set; }
     public string? Transcript { get; set; }
+    public string? Explanation { get; set; }
     public int OrderNumber { get; set; }
     public int PartNum { get; set; }
     public long? QuestionGroupId { get; set; }
