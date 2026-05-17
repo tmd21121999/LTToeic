@@ -1,0 +1,9 @@
+namespace CoreLTToeic.Application.Models.EditModels
+{
+    public class CourseSectionEditModel
+    {
+        public long Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public int? OrderIndex { get; set; }
+    }
+}

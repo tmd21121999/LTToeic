@@ -3,40 +3,240 @@
 
 <PageTitle>LTToeic - Hệ Thống Luyện Thi TOEIC</PageTitle>
 
-<div>
-    <h1 class="structure-heading">Cấu Trúc Bài Thi TOEIC Mới</h1>
-    <hr class="structure-separator" />
-
-    <div class="structure-grid">
-        <div>
-            <div class="structure-section-title">
-                <Icon Type="customer-service" Theme="IconThemeType.Outline" />
-                Listening (45 Phút)
-            </div>
-            <div class="structure-part-list">
-                <div class="structure-part-item">Part 1: Photographs (6 câu)</div>
-                <div class="structure-part-item">Part 2: Question-Response (25 câu)</div>
-                <div class="structure-part-item">Part 3: Conversations (39 câu)</div>
-                <div class="structure-part-item">Part 4: Short Talks (30 câu)</div>
+<!-- Hero Section -->
+<section class="home-hero">
+    <div class="home-hero-content">
+        <div class="home-hero-badge">Nền tảng luyện thi TOEIC #1</div>
+        <h1 class="home-hero-title">Chinh Phục TOEIC<br /><span class="home-hero-highlight">Tự Tin & Hiệu Quả</span></h1>
+        <p class="home-hero-desc">
+            Hệ thống đề thi chuẩn format mới nhất, bài giảng chuyên sâu và phân tích kết quả thông minh
+            giúp bạn đạt điểm mục tiêu nhanh nhất.
+        </p>
+        <div class="home-hero-actions">
+            <Button Type="ButtonType.Primary" Class="home-btn-primary" OnClick="@(() => Nav.NavigateTo("/luyen-thi"))">
+                <Icon Type="thunderbolt" Theme="IconThemeType.Outline" />
+                Bắt đầu luyện thi
+            </Button>
+            <Button Class="home-btn-secondary" OnClick="@(() => Nav.NavigateTo("/luyen-thi"))">
+                <Icon Type="book" Theme="IconThemeType.Outline" />
+                Xem đề thi
+            </Button>
+        </div>
+    </div>
+    <div class="home-hero-visual">
+        <div class="home-score-card">
+            <div class="home-score-ring">
+                <div class="home-score-value">990</div>
+                <div class="home-score-label">MAX SCORE</div>
             </div>
         </div>
-        <div>
-            <div class="structure-section-title">
-                <Icon Type="read" Theme="IconThemeType.Outline" />
-                Reading (75 Phút)
+        <div class="home-score-badge home-score-badge--listening">
+            <Icon Type="customer-service" Theme="IconThemeType.Outline" />
+            <span>Listening<br /><strong>495</strong></span>
+        </div>
+        <div class="home-score-badge home-score-badge--reading">
+            <Icon Type="read" Theme="IconThemeType.Outline" />
+            <span>Reading<br /><strong>495</strong></span>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="home-stats">
+    <div class="home-stats-grid">
+        <div class="home-stat-item">
+            <div class="home-stat-number">50+</div>
+            <div class="home-stat-label">Đề thi đầy đủ</div>
+        </div>
+        <div class="home-stat-item">
+            <div class="home-stat-number">5,000+</div>
+            <div class="home-stat-label">Câu hỏi luyện tập</div>
+        </div>
+        <div class="home-stat-item">
+            <div class="home-stat-number">10,000+</div>
+            <div class="home-stat-label">Người dùng</div>
+        </div>
+        <div class="home-stat-item">
+            <div class="home-stat-number">700+</div>
+            <div class="home-stat-label">Điểm trung bình đầu ra</div>
+        </div>
+    </div>
+</section>
+
+<!-- TOEIC Structure Section -->
+<section class="home-section">
+    <div class="home-section-header">
+        <h2 class="home-section-title">Cấu Trúc Bài Thi TOEIC</h2>
+        <p class="home-section-desc">Format bài thi TOEIC Listening &amp; Reading chuẩn quốc tế mới nhất</p>
+    </div>
+    <div class="home-structure-grid">
+        <div class="home-structure-card home-structure-card--listening">
+            <div class="home-structure-card-header">
+                <div class="home-structure-icon">
+                    <Icon Type="customer-service" Theme="IconThemeType.Outline" />
+                </div>
+                <div>
+                    <div class="home-structure-card-title">Listening</div>
+                    <div class="home-structure-card-sub">45 phút · 100 câu hỏi</div>
+                </div>
             </div>
-            <div class="structure-part-list">
-                <div class="structure-part-item">Part 5: Incomplete Sentences (30 câu)</div>
-                <div class="structure-part-item">Part 6: Text Completion (16 câu)</div>
-                <div class="structure-part-item">Part 7: Reading Comprehension (54 câu)</div>
+            <div class="home-structure-parts">
+                <div class="home-structure-part">
+                    <span class="home-part-badge">Part 1</span>
+                    <span class="home-part-name">Photographs</span>
+                    <span class="home-part-count">6 câu</span>
+                </div>
+                <div class="home-structure-part">
+                    <span class="home-part-badge">Part 2</span>
+                    <span class="home-part-name">Question-Response</span>
+                    <span class="home-part-count">25 câu</span>
+                </div>
+                <div class="home-structure-part">
+                    <span class="home-part-badge">Part 3</span>
+                    <span class="home-part-name">Conversations</span>
+                    <span class="home-part-count">39 câu</span>
+                </div>
+                <div class="home-structure-part">
+                    <span class="home-part-badge">Part 4</span>
+                    <span class="home-part-name">Short Talks</span>
+                    <span class="home-part-count">30 câu</span>
+                </div>
+            </div>
+        </div>
+        <div class="home-structure-card home-structure-card--reading">
+            <div class="home-structure-card-header">
+                <div class="home-structure-icon home-structure-icon--reading">
+                    <Icon Type="read" Theme="IconThemeType.Outline" />
+                </div>
+                <div>
+                    <div class="home-structure-card-title">Reading</div>
+                    <div class="home-structure-card-sub">75 phút · 100 câu hỏi</div>
+                </div>
+            </div>
+            <div class="home-structure-parts">
+                <div class="home-structure-part">
+                    <span class="home-part-badge home-part-badge--reading">Part 5</span>
+                    <span class="home-part-name">Incomplete Sentences</span>
+                    <span class="home-part-count">30 câu</span>
+                </div>
+                <div class="home-structure-part">
+                    <span class="home-part-badge home-part-badge--reading">Part 6</span>
+                    <span class="home-part-name">Text Completion</span>
+                    <span class="home-part-count">16 câu</span>
+                </div>
+                <div class="home-structure-part">
+                    <span class="home-part-badge home-part-badge--reading">Part 7</span>
+                    <span class="home-part-name">Reading Comprehension</span>
+                    <span class="home-part-count">54 câu</span>
+                </div>
             </div>
         </div>
     </div>
+</section>
 
-    <div class="structure-cta">
-        <Button Type="ButtonType.Primary" Class="btn-primary" OnClick="@(() => Nav.NavigateTo("/luyen-thi"))">
-            <Icon Type="right-circle" Theme="IconThemeType.Outline" />
-            Bắt đầu luyện thi
+<!-- Features Section -->
+<section class="home-section home-section--gray">
+    <div class="home-section-header">
+        <h2 class="home-section-title">Tại Sao Chọn LTToeic?</h2>
+        <p class="home-section-desc">Những tính năng giúp bạn học hiệu quả hơn mỗi ngày</p>
+    </div>
+    <div class="home-features-grid">
+        <div class="home-feature-card">
+            <div class="home-feature-icon home-feature-icon--blue">
+                <Icon Type="file-text" Theme="IconThemeType.Outline" />
+            </div>
+            <h3 class="home-feature-title">Đề Thi Chuẩn Format</h3>
+            <p class="home-feature-desc">Đề thi được thiết kế theo đúng chuẩn format TOEIC mới nhất với đầy đủ 7 Parts, âm thanh chất lượng cao.</p>
+        </div>
+        <div class="home-feature-card">
+            <div class="home-feature-icon home-feature-icon--green">
+                <Icon Type="bar-chart" Theme="IconThemeType.Outline" />
+            </div>
+            <h3 class="home-feature-title">Phân Tích Kết Quả</h3>
+            <p class="home-feature-desc">Xem điểm chi tiết từng phần Listening & Reading, tỉ lệ đúng sai và thời gian hoàn thành sau mỗi lần làm bài.</p>
+        </div>
+        <div class="home-feature-card">
+            <div class="home-feature-icon home-feature-icon--orange">
+                <Icon Type="clock-circle" Theme="IconThemeType.Outline" />
+            </div>
+            <h3 class="home-feature-title">Thi Mô Phỏng Thực Tế</h3>
+            <p class="home-feature-desc">Luyện thi với chế độ thi thử có đếm giờ giúp làm quen với áp lực thời gian như trong phòng thi thật.</p>
+        </div>
+        <div class="home-feature-card">
+            <div class="home-feature-icon home-feature-icon--purple">
+                <Icon Type="trophy" Theme="IconThemeType.Outline" />
+            </div>
+            <h3 class="home-feature-title">Lộ Trình Rõ Ràng</h3>
+            <p class="home-feature-desc">Các khoá học được xây dựng theo lộ trình từ cơ bản đến nâng cao, phù hợp với mọi trình độ học viên.</p>
+        </div>
+        <div class="home-feature-card">
+            <div class="home-feature-icon home-feature-icon--teal">
+                <Icon Type="mobile" Theme="IconThemeType.Outline" />
+            </div>
+            <h3 class="home-feature-title">Học Mọi Lúc Mọi Nơi</h3>
+            <p class="home-feature-desc">Giao diện tối ưu cho cả máy tính và điện thoại, học bất cứ khi nào bạn có thời gian rảnh.</p>
+        </div>
+        <div class="home-feature-card">
+            <div class="home-feature-icon home-feature-icon--red">
+                <Icon Type="sound" Theme="IconThemeType.Outline" />
+            </div>
+            <h3 class="home-feature-title">Âm Thanh Chất Lượng</h3>
+            <p class="home-feature-desc">File âm thanh Listening chất lượng cao, giọng đọc chuẩn bởi người bản ngữ, đúng tốc độ bài thi TOEIC thực tế.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Score Target Section -->
+<section class="home-section">
+    <div class="home-section-header">
+        <h2 class="home-section-title">Khung Điểm TOEIC</h2>
+        <p class="home-section-desc">Hiểu rõ mức điểm mục tiêu để lên kế hoạch học tập phù hợp</p>
+    </div>
+    <div class="home-score-table">
+        <div class="home-score-row home-score-row--header">
+            <span>Mức điểm</span>
+            <span>Trình độ</span>
+            <span>Phù hợp</span>
+        </div>
+        <div class="home-score-row">
+            <span class="home-score-range home-score-range--low">10 – 215</span>
+            <span>Sơ cấp</span>
+            <span class="home-score-desc-text">Giao tiếp cơ bản, học tập nền tảng</span>
+        </div>
+        <div class="home-score-row">
+            <span class="home-score-range home-score-range--mid">220 – 465</span>
+            <span>Trung cấp thấp</span>
+            <span class="home-score-desc-text">Làm việc môi trường ít giao tiếp tiếng Anh</span>
+        </div>
+        <div class="home-score-row">
+            <span class="home-score-range home-score-range--good">470 – 725</span>
+            <span>Trung cấp</span>
+            <span class="home-score-desc-text">Yêu cầu tối thiểu nhiều vị trí văn phòng</span>
+        </div>
+        <div class="home-score-row">
+            <span class="home-score-range home-score-range--high">730 – 855</span>
+            <span>Trung cấp cao</span>
+            <span class="home-score-desc-text">Làm việc quốc tế, du học, thăng tiến</span>
+        </div>
+        <div class="home-score-row">
+            <span class="home-score-range home-score-range--top">860 – 990</span>
+            <span>Thành thạo</span>
+            <span class="home-score-desc-text">Môi trường 100% tiếng Anh, vị trí quản lý</span>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="home-cta">
+    <h2 class="home-cta-title">Sẵn Sàng Chinh Phục TOEIC?</h2>
+    <p class="home-cta-desc">Bắt đầu luyện tập ngay hôm nay — hoàn toàn miễn phí</p>
+    <div class="home-cta-actions">
+        <Button Type="ButtonType.Primary" Class="home-btn-primary home-btn-large" OnClick="@(() => Nav.NavigateTo("/luyen-thi"))">
+            <Icon Type="rocket" Theme="IconThemeType.Outline" />
+            Luyện thi ngay
+        </Button>
+        <Button Class="home-btn-outline home-btn-large" OnClick="@(() => Nav.NavigateTo("/dang-ky"))">
+            Đăng ký miễn phí
         </Button>
     </div>
-</div>
+</section>

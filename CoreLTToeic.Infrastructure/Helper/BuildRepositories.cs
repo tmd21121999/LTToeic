@@ -18,6 +18,7 @@ namespace CoreLTToeic.Infrastructure.Helper
             services.AddScoped<IUserResultRepository, UserResultRepository>();
             services.AddScoped<IQuestionGroupRepository, QuestionGroupRepository>();
             services.AddScoped<IPartRepository, PartRepository>();
+            services.AddScoped<ICourseRepository, CourseRepository>();
         }
     }
 }

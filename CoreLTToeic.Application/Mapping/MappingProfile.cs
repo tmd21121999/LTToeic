@@ -3,6 +3,7 @@ using CoreLTToeic.Application.Models.EditModels;
 using CoreLTToeic.Application.Models.ViewModels;
 using CoreLTToeic.Domain.Entities;
 using CoreLTToeic.Domain.Enums;
+using System.Linq;
 
 namespace CoreLTToeic.Application.Mapping
 {
@@ -39,6 +40,26 @@ namespace CoreLTToeic.Application.Mapping
             CreateMap<UserResult, UserResultViewModel>()
                 .ForMember(d => d.TestTitle, o => o.MapFrom(s => s.Test != null ? s.Test.Title : string.Empty))
                 .ForMember(d => d.Answers, o => o.MapFrom(s => s.UserAnswers));
+
+            CreateMap<CourseLesson, CourseLessonViewModel>();
+            CreateMap<CourseLessonEditModel, CourseLesson>();
+
+            CreateMap<CourseSection, CourseSectionViewModel>()
+                .ForMember(d => d.LessonCount, o => o.MapFrom(s => s.Lessons.Count))
+                .ForMember(d => d.Lessons, o => o.MapFrom(s => s.Lessons.OrderBy(l => l.OrderIndex)));
+            CreateMap<CourseSectionEditModel, CourseSection>();
+
+            CreateMap<Course, CourseViewModel>()
+                .ForMember(d => d.SectionCount, o => o.MapFrom(s => s.Sections.Count))
+                .ForMember(d => d.Sections, o => o.MapFrom(s => s.Sections.OrderBy(sec => sec.OrderIndex)));
+            CreateMap<CourseEditModel, Course>()
+                .ForMember(d => d.Id, o => o.Ignore())
+                .ForMember(d => d.CreatedAt, o => o.Ignore())
+                .ForMember(d => d.UpdatedAt, o => o.Ignore())
+                .ForMember(d => d.Sections, o => o.Ignore())
+                .ForMember(d => d.Enrollments, o => o.Ignore())
+                .ForMember(d => d.Reviews, o => o.Ignore())
+                .ForMember(d => d.ThumbnailUrl, o => o.Ignore());
         }
     }
 }

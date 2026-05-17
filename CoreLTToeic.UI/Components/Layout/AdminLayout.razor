@@ -1,0 +1,133 @@
+@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Identity
+@inject AuthenticationStateProvider AuthStateProvider
+@inject SignInManager<AppUser> SignInManager
+@inject NavigationManager Nav
+
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-brand">
+            <span class="admin-sidebar-logo">LTToeic</span>
+            <span class="admin-sidebar-subtitle">Quản trị viên</span>
+        </div>
+
+        <div class="admin-sidebar-user">
+            <div class="admin-user-avatar">
+                <Icon Type="user" Theme="IconThemeType.Outline" Style="font-size:20px;color:#fff" />
+            </div>
+            <div class="admin-user-info">
+                <span class="admin-user-name">@_displayName</span>
+                <span class="admin-user-role">Quản trị viên</span>
+            </div>
+        </div>
+
+        <Menu Theme="MenuTheme.Dark"
+              Mode="MenuMode.Inline"
+              SelectedKeys="_selectedKeys"
+              OpenKeys="_openKeys"
+              Style="border:none;flex:1;overflow-y:auto">
+
+            <MenuItem Key="dashboard" OnClick="@(() => Nav.NavigateTo("/admin"))">
+                <Icon Type="dashboard" Theme="IconThemeType.Outline" />
+                <span>Tổng quan</span>
+            </MenuItem>
+
+            <SubMenu Key="online-test">
+                <TitleTemplate>
+                    <Icon Type="desktop" Theme="IconThemeType.Outline" />
+                    <span>Đề thi trực tuyến</span>
+                </TitleTemplate>
+                <ChildContent>
+                    <MenuItem Key="category" OnClick="@(() => Nav.NavigateTo("/admin/quan-li-danh-muc"))">
+                        Danh mục
+                    </MenuItem>
+                    <MenuItem Key="test" OnClick="@(() => Nav.NavigateTo("/admin/quan-li-de-thi"))">
+                        Đề thi
+                    </MenuItem>
+                </ChildContent>
+            </SubMenu>
+
+            <SubMenu Key="user">
+                <TitleTemplate>
+                    <Icon Type="team" Theme="IconThemeType.Outline" />
+                    <span>Người dùng</span>
+                </TitleTemplate>
+                <ChildContent>
+                    <MenuItem Key="account" OnClick="@(() => Nav.NavigateTo("/admin/quan-li-tai-khoan"))">
+                        Tài khoản
+                    </MenuItem>
+                    <MenuItem Key="result" OnClick="@(() => Nav.NavigateTo("/admin/quan-li-ket-qua"))">
+                        Kết quả thi
+                    </MenuItem>
+                </ChildContent>
+            </SubMenu>
+
+            <SubMenu Key="course">
+                <TitleTemplate>
+                    <Icon Type="book" Theme="IconThemeType.Outline" />
+                    <span>Khóa học</span>
+                </TitleTemplate>
+                <ChildContent>
+                    <MenuItem Key="course-list" OnClick="@(() => Nav.NavigateTo("/admin/quan-li-khoa-hoc"))">
+                        Khóa học
+                    </MenuItem>
+                </ChildContent>
+            </SubMenu>
+
+        </Menu>
+
+        <div class="admin-sidebar-footer">
+            <button class="admin-logout-btn" @onclick="Logout">
+                <Icon Type="logout" Theme="IconThemeType.Outline" />
+                <span>Đăng xuất</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="admin-main">
+        <div class="admin-content">
+            @Body
+        </div>
+    </div>
+</div>
+
+<AntDesign.AntContainer />
+
+<div id="blazor-error-ui">
+    Có lỗi đã xảy ra.
+    <a href="" class="reload">Tải lại</a>
+    <span class="dismiss">✕</span>
+</div>
+
+@code {
+    private string _displayName = "Admin";
+    private string[] _selectedKeys = [];
+    private string[] _openKeys = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateProvider.GetAuthenticationStateAsync();
+        _displayName = state.User.FindFirst("FullName")?.Value
+                       ?? state.User.Identity?.Name
+                       ?? "Admin";
+        SetActiveMenu(Nav.Uri);
+    }
+
+    private void SetActiveMenu(string uri)
+    {
+        var path = new Uri(uri).AbsolutePath.ToLower();
+
+        if (path.Contains("/quan-li-de-thi")) { _selectedKeys = new[] { "test" }; _openKeys = new[] { "online-test" }; }
+        else if (path.Contains("/quan-li-danh-muc")) { _selectedKeys = new[] { "category" }; _openKeys = new[] { "online-test" }; }
+        else if (path.Contains("/quan-li-tai-khoan")) { _selectedKeys = new[] { "account" }; _openKeys = new[] { "user" }; }
+        else if (path.Contains("/quan-li-ket-qua")) { _selectedKeys = new[] { "result" }; _openKeys = new[] { "user" }; }
+        else if (path.Contains("/quan-li-khoa-hoc")) { _selectedKeys = new[] { "course-list" }; _openKeys = new[] { "course" }; }
+        else { _selectedKeys = new[] { "dashboard" }; _openKeys = Array.Empty<string>(); }
+    }
+
+    private async Task Logout()
+    {
+        await SignInManager.SignOutAsync();
+        Nav.NavigateTo("/", forceLoad: true);
+    }
+}

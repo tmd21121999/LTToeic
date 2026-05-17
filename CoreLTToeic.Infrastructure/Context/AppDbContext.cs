@@ -19,5 +19,14 @@ namespace CoreLTToeic.Infrastructure.Context
         public DbSet<UserAnswer> UserAnswers { get; set; }
         public DbSet<ReadingScoreConversion> ReadingScoreConversions { get; set; }
         public DbSet<ListeningScoreConversion> ListeningScoreConversions { get; set; }
-    }   
+
+        public DbSet<Course> Courses { get; set; }
+        public DbSet<CourseSection> CourseSections { get; set; }
+        public DbSet<CourseLesson> CourseLessons { get; set; }
+        public DbSet<CourseEnrollment> CourseEnrollments { get; set; }
+        public DbSet<CourseReview> CourseReviews { get; set; }
+        public DbSet<LessonCompletion> LessonCompletions { get; set; }
+        public DbSet<QuizQuestion> QuizQuestions { get; set; }
+        public DbSet<QuizQuestionOption> QuizQuestionOptions { get; set; }
+    }
 }

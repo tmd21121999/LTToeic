@@ -23,7 +23,12 @@
       "PowerShell(Get-Process *)",
       "PowerShell(New-Item -ItemType Directory -Force -Path \"c:\\\\Project\\\\LTToeic\\\\CoreLTToeic.UI\\\\SeedData\")",
       "Bash(Get-ChildItem -Path \"c:\\\\Project\\\\LTToeic\" -Directory)",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Project\\\\LTToeic\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "PowerShell(head -50)",
+      "Bash(grep -E \"\\(IService|\\\\.cs$\\)\")",
+      "Bash(Find C:\\\\Project\\\\LTToeic\\\\CoreLTToeic.Application\\\\Business -type f -name \"*.cs\")"
     ]
   }
 }
