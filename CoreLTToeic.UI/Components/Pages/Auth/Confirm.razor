@@ -1,62 +1,81 @@
 @page "/confirm"
 @using Microsoft.AspNetCore.WebUtilities
-@inject HttpClient Http
+@inject IAuthRepository AuthRepository
 @inject NavigationManager Navigation
 
-<PageTitle>Confirm</PageTitle>
+<PageTitle>Xác nhận email - LTToeic</PageTitle>
 
-<h3>Email confirmation</h3>
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-brand">
+            <div class="auth-brand-logo">LTToeic</div>
+        </div>
 
-@if (isProcessing)
-{
-    <p>Processing confirmation...</p>
-}
-else if (success)
-{
-    <AntDesign.Alert Message="Email confirmed successfully." Type="AlertType.Success" />
-    <AntDesign.Button OnClick="@(() => Navigation.NavigateTo("/login"))">Go to login</AntDesign.Button>
-}
-else
-{
-    <AntDesign.Alert Message="@message" Type="AlertType.Error" />
-}
+        @if (_isProcessing)
+        {
+            <div style="text-align:center;padding:24px 0">
+                <Spin Tip="Đang xác nhận email..." />
+            </div>
+        }
+        else if (_success)
+        {
+            <Alert Type="@AlertType.Success" Message="Email xác nhận thành công!" Description="Bạn có thể đăng nhập ngay bây giờ." ShowIcon="true" />
+            <Button Type="ButtonType.Primary" Block Style="margin-top:16px" OnClick="@(() => Navigation.NavigateTo("/login"))">
+                Đến trang đăng nhập
+            </Button>
+        }
+        else
+        {
+            <Alert Type="@AlertType.Error" Message="Xác nhận thất bại" Description="@_message" ShowIcon="true" />
+            <Button Block Style="margin-top:16px" OnClick="@(() => Navigation.NavigateTo("/login"))">
+                Quay lại đăng nhập
+            </Button>
+        }
+    </div>
+</div>
 
 @code {
-    private bool isProcessing = true;
-    private bool success;
-    private string message = string.Empty;
+    [SupplyParameterFromQuery(Name = "error")]
+    private string? Error { get; set; }
+
+    private bool _isProcessing = true;
+    private bool _success;
+    private string _message = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
+        // Nếu redirect từ /api/auth/confirmemail với error=true
+        if (Error == "true")
+        {
+            _message = "Link xác nhận không hợp lệ hoặc đã hết hạn.";
+            _isProcessing = false;
+            return;
+        }
+
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
+
         if (!query.TryGetValue("userId", out var userId) || !query.TryGetValue("token", out var token))
         {
-            message = "Missing confirmation parameters.";
-            isProcessing = false;
+            _message = "Thiếu thông tin xác nhận.";
+            _isProcessing = false;
             return;
         }
 
         try
         {
-            var response = await Http.GetAsync($"/api/auth/confirm?userId={Uri.EscapeDataString(userId)}&token={Uri.EscapeDataString(token)}");
-            if (response.IsSuccessStatusCode)
-            {
-                success = true;
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                message = $"Confirmation failed: {errorContent}";
-            }
+            var result = await AuthRepository.ConfirmEmailAsync(userId!, token!);
+            _success = result.Succeeded;
+            if (!result.Succeeded)
+                _message = string.Join("; ", result.Errors.Select(e => e.Description));
         }
         catch (Exception ex)
         {
-            message = $"Confirmation error: {ex.Message}";
+            _message = $"Lỗi xác nhận: {ex.Message}";
         }
         finally
         {
-            isProcessing = false;
+            _isProcessing = false;
         }
     }
 }

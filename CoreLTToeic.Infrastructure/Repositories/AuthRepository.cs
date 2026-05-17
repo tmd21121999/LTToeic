@@ -127,9 +127,35 @@ namespace CoreLTToeic.Infrastructure.Repositories
                 return IdentityResult.Failed(new IdentityError { Description = "User not found" });
             }
 
-            var decodedToken = WebUtility.UrlDecode(token);
-            var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+            var result = await _userManager.ConfirmEmailAsync(user, token);
             return result;
+        }
+
+        public async Task<AppUser?> GetByIdAsync(string userId)
+        {
+            return await _userManager.FindByIdAsync(userId);
+        }
+
+        public async Task<IdentityResult> UpdateProfileAsync(string userId, UpdateProfileEditModel model)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return IdentityResult.Failed(new IdentityError { Description = "Không tìm thấy người dùng" });
+
+            user.FullName = model.FullName;
+            user.PhoneNumber = model.PhoneNumber;
+            user.DateOfBirth = model.DateOfBirth;
+
+            return await _userManager.UpdateAsync(user);
+        }
+
+        public async Task<IdentityResult> ChangePasswordAsync(string userId, string oldPassword, string newPassword)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return IdentityResult.Failed(new IdentityError { Description = "Không tìm thấy người dùng" });
+
+            return await _userManager.ChangePasswordAsync(user, oldPassword, newPassword);
         }
     }
 }

@@ -1,0 +1,11 @@
+@page "/admin"
+@layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
+@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        Nav.NavigateTo("/admin/quan-li-de-thi", replace: true);
+    }
+}

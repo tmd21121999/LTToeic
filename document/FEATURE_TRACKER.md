@@ -1,6 +1,6 @@
 # LTToeic — Bảng Theo Dõi Chức Năng
 
-> Cập nhật lần cuối: 2026-05-17 (session 2)
+> Cập nhật lần cuối: 2026-05-17 (session 3)
 > Đánh dấu `[x]` khi hoàn thành, thêm ngày hoàn thành vào cuối dòng.
 
 ---
@@ -10,11 +10,11 @@
 | # | Chức năng | Trạng thái | Ghi chú |
 |---|-----------|-----------|---------|
 | 1.1 | Đăng ký tài khoản (`/register`) | ✅ Hoàn thành | `Register.razor` + `AuthRepository` |
-| 1.2 | Đăng nhập (`/login`) | ✅ Hoàn thành | `Login.razor` |
-| 1.3 | Xác nhận email (`/confirm`) | ⚠️ Thiếu một phần | UI có, nhưng endpoint `GET /api/auth/confirm` **chưa được tạo** |
-| 1.4 | Đăng xuất | ✅ Hoàn thành | Nằm trong `NavMenu.razor` |
+| 1.2 | Đăng nhập (`/login`) | ✅ Hoàn thành | Hidden form POST → `/api/auth/signin` (tạo auth cookie đúng cách trong Blazor Server) — 2026-05-17 |
+| 1.3 | Xác nhận email (`/confirm`) | ✅ Hoàn thành | `GET /api/auth/confirmemail` đã tạo; `Confirm.razor` gọi `IAuthRepository` trực tiếp; sửa double-decode token — 2026-05-17 |
+| 1.4 | Đăng xuất | ✅ Hoàn thành | `GET /api/auth/signout` dùng `HttpContext.SignOutAsync` — 2026-05-17 |
 | 1.5 | Quên mật khẩu / Đặt lại mật khẩu | ❌ Chưa làm | |
-| 1.6 | Đổi mật khẩu | ❌ Chưa làm | |
+| 1.6 | Đổi mật khẩu | ✅ Hoàn thành | Drawer trong NavMenu, `AuthRepository.ChangePasswordAsync` — 2026-05-17 |
 
 ---
 
@@ -22,8 +22,8 @@
 
 | # | Chức năng | Trạng thái | Ghi chú |
 |---|-----------|-----------|---------|
-| 2.1 | Trang hồ sơ cá nhân | ❌ Chưa làm | Entity `AppUser` có đủ field: Avatar, Address, Education, Occupation, EnglishLevel, TargetScore |
-| 2.2 | Chỉnh sửa thông tin cá nhân | ❌ Chưa làm | |
+| 2.1 | Trang hồ sơ cá nhân | ⚠️ Một phần | Dropdown + Drawer trong NavMenu (FullName, SĐT, Ngày sinh); chưa có trang hồ sơ riêng |
+| 2.2 | Chỉnh sửa thông tin cá nhân | ✅ Hoàn thành | `UpdateProfileEditModel`, `AuthRepository.UpdateProfileAsync`, Drawer trong NavMenu — 2026-05-17 |
 | 2.3 | Upload ảnh đại diện | ❌ Chưa làm | |
 | 2.4 | Dashboard người dùng (lịch sử thi, tiến độ) | ❌ Chưa làm | |
 
@@ -62,7 +62,7 @@
 | 4.8 | Preview câu hỏi realtime | ✅ Hoàn thành | `QuestionPreviewCard.razor`, `QuestionGroupPreviewCard.razor` |
 | 4.9 | Quản lý danh mục đề thi | ⚠️ Một phần | Service method có, chưa có trang UI riêng |
 | 4.10 | Import đề thi từ JSON/file | ⚠️ Có seeder | `ToeicTestSeeder` chỉ dùng để seed, chưa phải UI import |
-| 4.11 | Phân quyền admin (bảo vệ route) | ❌ Chưa làm | Route admin chưa có `[Authorize(Roles="Admin")]` |
+| 4.11 | Phân quyền admin (bảo vệ route) | ✅ Hoàn thành | `[Authorize(Roles="Admin")]` trên `AdminLayout`, `ExamManagementList`, `CourseManagement`, `AdminIndex`; `AuthorizeRouteView` trong `Routes.razor` — 2026-05-17 |
 
 ---
 
@@ -103,7 +103,7 @@
 | 7.2 | Quản lý người dùng (danh sách, phân quyền) | ❌ Chưa làm | |
 | 7.3 | Xem kết quả thi của tất cả user | ❌ Chưa làm | |
 | 7.4 | Quản lý bảng quy đổi điểm | ⚠️ Một phần | Seeder + repository đã có, chưa có trang admin để chỉnh sửa |
-| 7.5 | Phân quyền bảo vệ tất cả route `/admin/*` | ❌ Chưa làm | |
+| 7.5 | Phân quyền bảo vệ tất cả route `/admin/*` | ✅ Hoàn thành | `AdminSeeder` tạo role "Admin" + user `admin/admin`; middleware `UseAuthentication`/`UseAuthorization`; trang `/khong-co-quyen` (`AccessDenied.razor`) cho user không có quyền — 2026-05-17 |
 
 ---
 
@@ -115,8 +115,8 @@
 | 8.2 | ASP.NET Core Identity | ✅ Hoàn thành | |
 | 8.3 | EF Core + SQL Server | ✅ Hoàn thành | |
 | 8.4 | AutoMapper profiles | ✅ Hoàn thành | |
-| 8.5 | Email xác nhận (SMTP Gmail) | ✅ Hoàn thành | |
-| 8.6 | Endpoint `GET /api/auth/confirm` | ❌ Chưa làm | Controller thiếu — xem `auth.md` |
+| 8.5 | Email xác nhận (SMTP Gmail) | ✅ Hoàn thành | Sửa `MailSettings` DI (`Configure<MailSettings>`), sửa config key `Username`, sửa `From` — 2026-05-17 |
+| 8.6 | Endpoint `GET /api/auth/confirmemail` | ✅ Hoàn thành | Minimal API trong `Program.cs`; sửa double-decode token — 2026-05-17 |
 | 8.7 | Seed data bảng quy đổi điểm | ✅ Hoàn thành | `ScoreConversionSeeder` — 101 dòng mỗi bảng, idempotent — 2026-05-17 |
 | 8.8 | Components tái sử dụng kết quả thi | ✅ Hoàn thành | `TestScoreCard`, `TestResultStats`, `QuestionReviewItem`, `TestStartScreen` — 2026-05-17 |
 
@@ -126,11 +126,11 @@
 
 | Layer | Đã làm | Chưa làm |
 |-------|--------|----------|
-| Authentication | Đăng ký, đăng nhập, đăng xuất | Quên MK, xác nhận email API, đổi MK |
+| Authentication | Đăng ký, đăng nhập, đăng xuất, xác nhận email, đổi mật khẩu | Quên MK / đặt lại MK |
 | Test | Làm bài, nộp bài, admin CRUD, kết quả sau thi, xem lại đáp án, chọn chế độ thi, quy đổi điểm | Lịch sử thi, luyện từng Part riêng |
 | Course | Admin CRUD đầy đủ | Toàn bộ UI phía user |
-| User Profile | — | Hồ sơ, dashboard, ảnh đại diện |
-| Admin | Quản lý đề thi, khóa học | Dashboard, user management, phân quyền |
+| User Profile | Chỉnh sửa thông tin (Drawer NavMenu), đổi mật khẩu | Trang hồ sơ riêng, dashboard, ảnh đại diện |
+| Admin | Quản lý đề thi, khóa học, phân quyền, seed admin, trang AccessDenied | Dashboard, user management |
 | Tài liệu | — | Toàn bộ |
 
 ---
@@ -141,3 +141,4 @@
 |------|---------------------|
 | 2026-05-17 | Khởi tạo file tracking, khảo sát toàn bộ codebase |
 | 2026-05-17 | **Ưu tiên 2 hoàn thành:** Trang kết quả `/ket-qua/{ResultId}`, xem lại đáp án theo Part, màn hình chọn chế độ thi (`TestStartScreen`), timer đếm lên cho luyện tập không giới hạn, seeder bảng quy đổi điểm TOEIC chuẩn, 4 shared components mới |
+| 2026-05-17 | **Session 3 — Auth & Admin hoàn thành:** Sửa toàn bộ luồng đăng ký/đăng nhập Blazor Server (hidden form POST, auth cookie đúng cách); sửa SMTP config (`MailSettings` DI, key `Username`, `From`); sửa xác nhận email (endpoint + double-decode token); đăng xuất qua `HttpContext.SignOutAsync`; profile dropdown + Drawer đổi thông tin/mật khẩu; `AdminSeeder` tạo role + user `admin/admin`; `[Authorize(Roles="Admin")]` toàn bộ admin; `AuthorizeRouteView` + trang `AccessDenied.razor` (`/khong-co-quyen`) |

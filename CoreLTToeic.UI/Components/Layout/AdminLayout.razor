@@ -1,8 +1,8 @@
 @inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Identity
 @inject AuthenticationStateProvider AuthStateProvider
-@inject SignInManager<AppUser> SignInManager
 @inject NavigationManager Nav
+@attribute [Authorize(Roles = "Admin")]
 
 <div class="admin-layout">
     <aside class="admin-sidebar">
@@ -125,9 +125,8 @@
         else { _selectedKeys = new[] { "dashboard" }; _openKeys = Array.Empty<string>(); }
     }
 
-    private async Task Logout()
+    private void Logout()
     {
-        await SignInManager.SignOutAsync();
-        Nav.NavigateTo("/", forceLoad: true);
+        Nav.NavigateTo("/api/auth/signout", forceLoad: true);
     }
 }

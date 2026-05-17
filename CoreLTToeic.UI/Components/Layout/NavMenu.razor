@@ -1,7 +1,9 @@
 @using Microsoft.AspNetCore.Identity
+@using System.Security.Claims
 @inject AuthenticationStateProvider AuthStateProvider
-@inject SignInManager<AppUser> SignInManager
 @inject NavigationManager Nav
+@inject IAuthRepository AuthRepository
+@inject MessageService Message
 
 <header class="top-navbar">
     <a class="nav-brand" href="/">LTToeic</a>
@@ -14,8 +16,32 @@
     <div class="nav-user">
         @if (_isLoggedIn)
         {
-            <span class="nav-user-name">@_displayName</span>
-            <button class="nav-logout-btn" @onclick="Logout">Đăng xuất</button>
+            <Dropdown Trigger="@(new[] { Trigger.Click })" Placement="Placement.BottomRight">
+                <Overlay>
+                    <Menu>
+                        <MenuItem Key="profile" OnClick="@(async () => await OpenProfileDrawer())">
+                            <Icon Type="user" Theme="IconThemeType.Outline" />
+                            <span>Thiết lập hồ sơ</span>
+                        </MenuItem>
+                        <MenuItem Key="password" OnClick="@(() => OpenPasswordDrawer())">
+                            <Icon Type="lock" Theme="IconThemeType.Outline" />
+                            <span>Đổi mật khẩu</span>
+                        </MenuItem>
+                        <MenuDivider />
+                        <MenuItem Key="logout" OnClick="@(() => Logout())">
+                            <Icon Type="logout" Theme="IconThemeType.Outline" />
+                            <span>Đăng xuất</span>
+                        </MenuItem>
+                    </Menu>
+                </Overlay>
+                <ChildContent>
+                    <span class="nav-user-name" style="cursor:pointer">
+                        <Icon Type="user" Theme="IconThemeType.Outline" Style="margin-right:6px" />
+                        @_displayName
+                        <Icon Type="down" Theme="IconThemeType.Outline" Style="margin-left:4px;font-size:11px" />
+                    </span>
+                </ChildContent>
+            </Dropdown>
         }
         else
         {
@@ -26,9 +52,59 @@
     </div>
 </header>
 
+<Drawer Visible="_profileDrawerOpen"
+        Title="@("Thiết lập hồ sơ")"
+        Width="420"
+        OnClose="CloseDrawers">
+    <Form Model="_profileModel" OnFinish="SaveProfile" Layout="@FormLayout.Vertical">
+        <FormItem Label="Họ và tên" Required>
+            <Input @bind-Value="_profileModel.FullName" Placeholder="Nhập họ và tên" />
+        </FormItem>
+        <FormItem Label="Số điện thoại">
+            <Input @bind-Value="_profileModel.PhoneNumber" Placeholder="Nhập số điện thoại" />
+        </FormItem>
+        <FormItem Label="Ngày sinh">
+            <DatePicker TValue="DateTime?" @bind-Value="_profileModel.DateOfBirth" Style="width:100%" />
+        </FormItem>
+        <FormItem>
+            <Button Type="ButtonType.Primary" HtmlType="submit" Loading="_saving">Lưu thay đổi</Button>
+            <Button Style="margin-left:8px" OnClick="CloseDrawers">Huỷ</Button>
+        </FormItem>
+    </Form>
+</Drawer>
+
+<Drawer Visible="_passwordDrawerOpen"
+        Title="@("Đổi mật khẩu")"
+        Width="420"
+        OnClose="CloseDrawers">
+    <Form Model="_passwordModel" OnFinish="SavePassword" Layout="@FormLayout.Vertical">
+        <FormItem Label="Mật khẩu hiện tại" Required>
+            <InputPassword @bind-Value="_passwordModel.OldPassword" Placeholder="Nhập mật khẩu hiện tại" />
+        </FormItem>
+        <FormItem Label="Mật khẩu mới" Required>
+            <InputPassword @bind-Value="_passwordModel.NewPassword" Placeholder="Nhập mật khẩu mới" />
+        </FormItem>
+        <FormItem Label="Xác nhận mật khẩu mới" Required>
+            <InputPassword @bind-Value="_passwordModel.ConfirmPassword" Placeholder="Nhập lại mật khẩu mới" />
+        </FormItem>
+        <FormItem>
+            <Button Type="ButtonType.Primary" HtmlType="submit" Loading="_saving">Đổi mật khẩu</Button>
+            <Button Style="margin-left:8px" OnClick="CloseDrawers">Huỷ</Button>
+        </FormItem>
+    </Form>
+</Drawer>
+
 @code {
     private bool _isLoggedIn;
     private string _displayName = "";
+    private string _userId = "";
+
+    private bool _profileDrawerOpen;
+    private bool _passwordDrawerOpen;
+    private bool _saving;
+
+    private UpdateProfileEditModel _profileModel = new();
+    private ChangePasswordModel _passwordModel = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -39,12 +115,114 @@
             _displayName = state.User.FindFirst("FullName")?.Value
                            ?? state.User.Identity?.Name
                            ?? "Người dùng";
+            _userId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
         }
     }
 
-    private async Task Logout()
+    private async Task OpenProfileDrawer()
     {
-        await SignInManager.SignOutAsync();
-        Nav.NavigateTo("/", forceLoad: true);
+        if (string.IsNullOrEmpty(_userId)) return;
+        try
+        {
+            var user = await AuthRepository.GetByIdAsync(_userId);
+            if (user != null)
+            {
+                _profileModel = new UpdateProfileEditModel
+                {
+                    FullName = user.FullName ?? "",
+                    PhoneNumber = user.PhoneNumber,
+                    DateOfBirth = user.DateOfBirth
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi tải thông tin: {ex.Message}");
+        }
+        _profileDrawerOpen = true;
+    }
+
+    private void OpenPasswordDrawer()
+    {
+        _passwordModel = new ChangePasswordModel();
+        _passwordDrawerOpen = true;
+    }
+
+    private void CloseDrawers()
+    {
+        _profileDrawerOpen = false;
+        _passwordDrawerOpen = false;
+    }
+
+    private async Task SaveProfile()
+    {
+        _saving = true;
+        try
+        {
+            var result = await AuthRepository.UpdateProfileAsync(_userId, _profileModel);
+            if (result.Succeeded)
+            {
+                await Message.SuccessAsync("Cập nhật hồ sơ thành công!");
+                _displayName = _profileModel.FullName;
+                CloseDrawers();
+            }
+            else
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                await Message.ErrorAsync($"Lỗi: {errors}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi: {ex.Message}");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task SavePassword()
+    {
+        if (_passwordModel.NewPassword != _passwordModel.ConfirmPassword)
+        {
+            await Message.ErrorAsync("Mật khẩu xác nhận không khớp!");
+            return;
+        }
+        _saving = true;
+        try
+        {
+            var result = await AuthRepository.ChangePasswordAsync(_userId, _passwordModel.OldPassword, _passwordModel.NewPassword);
+            if (result.Succeeded)
+            {
+                await Message.SuccessAsync("Đổi mật khẩu thành công!");
+                CloseDrawers();
+            }
+            else
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                await Message.ErrorAsync($"Lỗi: {errors}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"Lỗi: {ex.Message}");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void Logout()
+    {
+        Nav.NavigateTo("/api/auth/signout", forceLoad: true);
+    }
+
+    private class ChangePasswordModel
+    {
+        public string OldPassword { get; set; } = string.Empty;
+        public string NewPassword { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
     }
 }

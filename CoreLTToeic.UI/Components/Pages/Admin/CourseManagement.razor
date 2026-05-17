@@ -1,5 +1,6 @@
 @page "/admin/quan-li-khoa-hoc"
 @layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
 @inject ICourseService CourseService
 @inject IWebHostEnvironment Env
 @inject MessageService Message

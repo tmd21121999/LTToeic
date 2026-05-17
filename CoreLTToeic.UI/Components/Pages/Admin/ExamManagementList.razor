@@ -1,5 +1,6 @@
 @page "/admin/quan-li-de-thi"
 @layout AdminLayout
+@attribute [Authorize(Roles = "Admin")]
 @inject ITestService TestService
 @inject IWebHostEnvironment Env
 @inject MessageService Message

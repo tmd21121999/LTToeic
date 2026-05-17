@@ -1,9 +1,14 @@
 @page "/login"
-@inject IAuthRepository AuthRepository
 @inject MessageService Message
 @inject NavigationManager Navigation
 
 <PageTitle>Đăng nhập - LTToeic</PageTitle>
+
+@* Hidden form POST đến minimal API để tạo auth cookie đúng cách trong Blazor Server *@
+<form id="signin-form" method="post" action="/api/auth/signin" style="display:none">
+    <input id="signin-username" name="username" />
+    <input id="signin-password" name="password" />
+</form>
 
 <div class="auth-page">
     <div class="auth-card">
@@ -11,6 +16,15 @@
             <div class="auth-brand-logo">LTToeic</div>
         </div>
         <h2 class="auth-title">Đăng nhập</h2>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <Alert Type="@AlertType.Error" Message="@_errorMessage" ShowIcon="true" Style="margin-bottom:16px" />
+        }
+        @if (_emailConfirmed)
+        {
+            <Alert Type="@AlertType.Success" Message="Email xác nhận thành công! Bạn có thể đăng nhập." ShowIcon="true" Style="margin-bottom:16px" />
+        }
 
         <Form Model="@_model" OnFinish="OnFinish" Layout="@FormLayout.Vertical">
             <FormItem Label="Tên đăng nhập" Required>
@@ -35,27 +49,30 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery(Name = "error")]
+    private string? Error { get; set; }
+
+    [SupplyParameterFromQuery(Name = "confirmed")]
+    private string? Confirmed { get; set; }
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
     private LoginEditModel _model = new();
+    private string _errorMessage = string.Empty;
+    private bool _emailConfirmed;
+
+    protected override void OnParametersSet()
+    {
+        _errorMessage = string.IsNullOrEmpty(Error) ? string.Empty : Uri.UnescapeDataString(Error.Replace('+', ' '));
+        _emailConfirmed = Confirmed == "true";
+    }
 
     private async Task OnFinish()
     {
-        try
-        {
-            var result = await AuthRepository.Login(_model);
-            if (result.Succeeded)
-            {
-                await Message.SuccessAsync("Đăng nhập thành công!");
-                Navigation.NavigateTo("/", forceLoad: true);
-            }
-            else
-            {
-                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
-                await Message.ErrorAsync($"Đăng nhập thất bại: {errors}");
-            }
-        }
-        catch (Exception ex)
-        {
-            await Message.ErrorAsync($"Lỗi: {ex.Message}");
-        }
+        // Điền giá trị vào hidden form rồi submit — tránh vấn đề set cookie trong Blazor circuit
+        await JS.InvokeVoidAsync("eval",
+            $"document.getElementById('signin-username').value={System.Text.Json.JsonSerializer.Serialize(_model.UserName)};" +
+            $"document.getElementById('signin-password').value={System.Text.Json.JsonSerializer.Serialize(_model.Password)};" +
+            "document.getElementById('signin-form').submit();");
     }
 }
