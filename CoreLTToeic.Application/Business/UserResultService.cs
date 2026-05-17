@@ -15,6 +15,7 @@ public class UserResultService : IUserResultService
     private readonly IQuestionRepository _questionRepo;
     private readonly IPartRepository _partRepo;
     private readonly IQuestionGroupRepository _groupRepo;
+    private readonly IScoreConversionRepository _scoreRepo;
     private readonly IMapper _mapper;
 
     public UserResultService(
@@ -22,12 +23,14 @@ public class UserResultService : IUserResultService
         IQuestionRepository questionRepo,
         IPartRepository partRepo,
         IQuestionGroupRepository groupRepo,
+        IScoreConversionRepository scoreRepo,
         IMapper mapper)
     {
         _userResultRepo = userResultRepo;
         _questionRepo = questionRepo;
         _partRepo = partRepo;
         _groupRepo = groupRepo;
+        _scoreRepo = scoreRepo;
         _mapper = mapper;
     }
 
@@ -90,10 +93,14 @@ public class UserResultService : IUserResultService
                 });
             }
 
-            int listeningScore = totalListening > 0
-                ? (int)Math.Round((double)listeningCorrects / totalListening * 495) : 0;
-            int readingScore = totalReading > 0
-                ? (int)Math.Round((double)readingCorrects / totalReading * 495) : 0;
+            // Chuẩn hóa về thang 0-100 trước khi lookup bảng quy đổi
+            int listeningKey = totalListening > 0
+                ? Math.Min((int)Math.Round(listeningCorrects * 100.0 / totalListening), 100) : 0;
+            int readingKey = totalReading > 0
+                ? Math.Min((int)Math.Round(readingCorrects * 100.0 / totalReading), 100) : 0;
+
+            int listeningScore = await _scoreRepo.GetListeningScoreAsync(listeningKey);
+            int readingScore   = await _scoreRepo.GetReadingScoreAsync(readingKey);
 
             float accuracy = model.Answers.Count > 0
                 ? (float)correct / model.Answers.Count * 100 : 0;

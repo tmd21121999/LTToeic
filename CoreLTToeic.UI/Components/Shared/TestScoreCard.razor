@@ -1,0 +1,29 @@
+@using AntDesign
+
+<div style="display:flex; gap:16px; margin-bottom:24px; flex-wrap:wrap; justify-content:center;">
+    <Card Bordered Style="flex:1; min-width:180px; text-align:center; background:linear-gradient(135deg,#1B527A,#2471A3); color:#fff; border-radius:12px;">
+        <Statistic Title="Tổng điểm"
+                   Value="@TotalScore"
+                   Suffix="/ 990"
+                   ValueStyle="font-size:2.5rem; font-weight:700; color:#fff;"
+                   TitleStyle="color:rgba(255,255,255,0.85); font-size:1rem;" />
+    </Card>
+    <Card Bordered Style="flex:1; min-width:160px; text-align:center; border-radius:12px;">
+        <Statistic Title="Listening"
+                   Value="@ListeningScore"
+                   Suffix="/ 495"
+                   ValueStyle="font-size:2rem; font-weight:600; color:#1B527A;" />
+    </Card>
+    <Card Bordered Style="flex:1; min-width:160px; text-align:center; border-radius:12px;">
+        <Statistic Title="Reading"
+                   Value="@ReadingScore"
+                   Suffix="/ 495"
+                   ValueStyle="font-size:2rem; font-weight:600; color:#2471A3;" />
+    </Card>
+</div>
+
+@code {
+    [Parameter] public int TotalScore { get; set; }
+    [Parameter] public int ListeningScore { get; set; }
+    [Parameter] public int ReadingScore { get; set; }
+}

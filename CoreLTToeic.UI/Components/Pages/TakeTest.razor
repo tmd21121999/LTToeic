@@ -24,6 +24,10 @@ else if (_test == null)
         <p>Không tìm thấy đề thi</p>
     </div>
 }
+else if (!_testStarted)
+{
+    <TestStartScreen Test="_test" OnStart="HandleStart" />
+}
 else
 {
     <div class="tt-root">
@@ -33,9 +37,18 @@ else
 
             @if (!_isViewResult)
             {
-                <div class="tt-timer @(_remainingSeconds <= 300 ? "tt-timer-urgent" : "")">
-                    Thời gian còn lại: @FormatTime(_remainingSeconds)
-                </div>
+                @if (_countUp)
+                {
+                    <div class="tt-timer">
+                        Thời gian: @FormatTime(_elapsedSeconds)
+                    </div>
+                }
+                else
+                {
+                    <div class="tt-timer @(_remainingSeconds <= 300 ? "tt-timer-urgent" : "")">
+                        Thời gian còn lại: @FormatTime(_remainingSeconds)
+                    </div>
+                }
                 <Button Type="@ButtonType.Primary" Class="tt-submit-btn"
                         OnClick="ConfirmSubmit" Loading="_submitting">
                     Nộp bài
@@ -357,6 +370,13 @@ else
     private int _remainingSeconds;
     private System.Threading.Timer? _timer;
 
+    // Start screen & timer mode
+    private bool _testStarted = false;
+    private TestMode _selectedMode = TestMode.Simulation;
+    private int _testDuration;           // duration thực dùng (phút)
+    private bool _countUp = false;       // true = luyện tập không giới hạn
+    private int _elapsedSeconds = 0;
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -379,9 +399,8 @@ else
 
             BuildQuestionIndex(allQuestions);
 
-            _remainingSeconds = (_test.Duration > 0 ? _test.Duration : 120) * 60;
             if (_parts.Any()) _activePartId = _parts.First().Id;
-            StartTimer();
+            // Timer sẽ được khởi động sau khi user bấm "Bắt đầu" ở màn hình start screen
         }
         catch (Exception ex)
         {
@@ -441,16 +460,48 @@ else
         }
     }
 
+    private void HandleStart((TestMode Mode, int DurationMinutes) args)
+    {
+        _selectedMode = args.Mode;
+        if (args.Mode == TestMode.Simulation)
+        {
+            _testDuration     = 120;
+            _remainingSeconds = 120 * 60;
+            _countUp          = false;
+        }
+        else if (args.DurationMinutes > 0)
+        {
+            _testDuration     = args.DurationMinutes;
+            _remainingSeconds = args.DurationMinutes * 60;
+            _countUp          = false;
+        }
+        else
+        {
+            _testDuration     = 0;
+            _elapsedSeconds   = 0;
+            _countUp          = true;
+        }
+        _testStarted = true;
+        StartTimer();
+    }
+
     private void StartTimer()
     {
         _timer = new System.Threading.Timer(async _ =>
         {
-            _remainingSeconds--;
-            if (_remainingSeconds <= 0)
+            if (_countUp)
             {
-                _remainingSeconds = 0;
-                _timer?.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
-                await InvokeAsync(AutoSubmit);
+                _elapsedSeconds++;
+            }
+            else
+            {
+                _remainingSeconds--;
+                if (_remainingSeconds <= 0)
+                {
+                    _remainingSeconds = 0;
+                    _timer?.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+                    await InvokeAsync(AutoSubmit);
+                }
             }
             await InvokeAsync(StateHasChanged);
         }, null, 1000, 1000);
@@ -490,12 +541,17 @@ else
             var userId = authState.User.FindFirst(c =>
                 c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
 
-            var completionTime = (_test!.Duration * 60) - _remainingSeconds;
+            var completionTime = _countUp
+                ? _elapsedSeconds
+                : (_testDuration * 60) - _remainingSeconds;
 
             if (string.IsNullOrEmpty(userId))
             {
                 _result = CalculateLocalResult(completionTime);
                 await SaveGuestResultToLocalStorage(_result);
+                _isViewResult = true;
+                await Message.SuccessAsync("Nộp bài thành công!");
+                await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
             }
             else
             {
@@ -503,7 +559,7 @@ else
                 {
                     TestId = TestId,
                     UserId = userId,
-                    TestMode = TestMode.Practice,
+                    TestMode = _selectedMode,
                     Answers = _questionIndex.Select(qi => new UserAnswerEditModel
                     {
                         QuestionId = qi.QuestionId,
@@ -512,12 +568,9 @@ else
                 };
 
                 var resultId = await UserResultService.SubmitTestAsync(model, completionTime);
-                _result = await UserResultService.GetResultAsync(resultId);
+                await Message.SuccessAsync("Nộp bài thành công!");
+                Nav.NavigateTo($"/ket-qua/{resultId}");
             }
-
-            _isViewResult = true;
-            await Message.SuccessAsync("Nộp bài thành công!");
-            await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
         }
         catch (Exception ex)
         {
@@ -567,10 +620,12 @@ else
             });
         }
 
-        int listeningScore = totalListening > 0
-            ? (int)Math.Round((double)listeningCorrects / totalListening * 495) : 0;
-        int readingScore = totalReading > 0
-            ? (int)Math.Round((double)readingCorrects / totalReading * 495) : 0;
+        int listeningKey = totalListening > 0
+            ? Math.Min((int)Math.Round(listeningCorrects * 100.0 / totalListening), 100) : 0;
+        int readingKey = totalReading > 0
+            ? Math.Min((int)Math.Round(readingCorrects * 100.0 / totalReading), 100) : 0;
+        int listeningScore = Math.Min(listeningKey * 5, 495);
+        int readingScore   = Math.Min(readingKey * 5, 495);
 
         return new UserResultViewModel
         {
@@ -585,7 +640,7 @@ else
             Accuracy = _questionIndex.Count > 0 ? (float)correct / _questionIndex.Count * 100 : 0,
             CompletionTime = completionTime,
             CompletedAt = DateTime.Now,
-            TestMode = TestMode.Practice,
+            TestMode = _selectedMode,
             TestTitle = _test?.Title ?? string.Empty,
             Answers = answers
         };

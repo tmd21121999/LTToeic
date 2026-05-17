@@ -5,6 +5,7 @@ namespace CoreLTToeic.Application.Models.ViewModels;
 public class UserResultViewModel
 {
     public long Id { get; set; }
+    public long TestId { get; set; }
     public int CorrectAnswers { get; set; }
     public int IncorrectAnswers { get; set; }
     public int SkippedAnswers { get; set; }

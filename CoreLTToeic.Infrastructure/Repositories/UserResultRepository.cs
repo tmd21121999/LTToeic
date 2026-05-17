@@ -30,7 +30,7 @@ namespace CoreLTToeic.Infrastructure.Repositories
             using var ctx = await _factory.CreateDbContextAsync();
             return await ctx.UserResults
                 .Include(r => r.Test)
-                .Include(r => r.UserAnswers).ThenInclude(a => a.Question)
+                .Include(r => r.UserAnswers).ThenInclude(a => a.Question).ThenInclude(q => q!.Part)
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
     }

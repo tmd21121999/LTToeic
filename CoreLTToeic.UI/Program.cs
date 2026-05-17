@@ -77,6 +77,9 @@ using (var scope = app.Services.CreateScope())
 {
     var seeder = scope.ServiceProvider.GetRequiredService<CoreLTToeic.Infrastructure.Data.Seeders.ToeicTestSeeder>();
     await seeder.SeedAsync(Path.Combine(contentRoot, "SeedData", "toeic_test_1.json"));
+
+    var scoreSeeder = scope.ServiceProvider.GetRequiredService<CoreLTToeic.Infrastructure.Data.Seeders.ScoreConversionSeeder>();
+    await scoreSeeder.SeedAsync();
 }
 
 app.Run();

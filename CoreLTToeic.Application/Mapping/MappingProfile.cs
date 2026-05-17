@@ -35,7 +35,19 @@ namespace CoreLTToeic.Application.Mapping
             CreateMap<TestCategory, TestCategoryViewModel>();
 
             CreateMap<UserAnswer, UserAnswerViewModel>()
-                .ForMember(d => d.CorrectAnswer, o => o.MapFrom(s => s.Question != null ? s.Question.CorrectAnswer : null));
+                .ForMember(d => d.CorrectAnswer,     o => o.MapFrom(s => s.Question != null ? s.Question.CorrectAnswer : null))
+                .ForMember(d => d.QuestionContent,   o => o.MapFrom(s => s.Question != null ? s.Question.Content : null))
+                .ForMember(d => d.Answer1,            o => o.MapFrom(s => s.Question != null ? s.Question.Answer1 : null))
+                .ForMember(d => d.Answer2,            o => o.MapFrom(s => s.Question != null ? s.Question.Answer2 : null))
+                .ForMember(d => d.Answer3,            o => o.MapFrom(s => s.Question != null ? s.Question.Answer3 : null))
+                .ForMember(d => d.Answer4,            o => o.MapFrom(s => s.Question != null ? s.Question.Answer4 : null))
+                .ForMember(d => d.Audio,              o => o.MapFrom(s => s.Question != null ? s.Question.Audio : null))
+                .ForMember(d => d.Image,              o => o.MapFrom(s => s.Question != null ? s.Question.Image : null))
+                .ForMember(d => d.Transcript,         o => o.MapFrom(s => s.Question != null ? s.Question.Transcript : null))
+                .ForMember(d => d.OrderNumber,        o => o.MapFrom(s => s.Question != null ? s.Question.OrderNumber : 0))
+                .ForMember(d => d.PartNum,            o => o.MapFrom(s => s.Question != null && s.Question.Part != null
+                                                          ? (int)s.Question.Part.PartNum : 0))
+                .ForMember(d => d.QuestionGroupId,    o => o.MapFrom(s => s.Question != null ? s.Question.QuestionGroupId : null));
 
             CreateMap<UserResult, UserResultViewModel>()
                 .ForMember(d => d.TestTitle, o => o.MapFrom(s => s.Test != null ? s.Test.Title : string.Empty))

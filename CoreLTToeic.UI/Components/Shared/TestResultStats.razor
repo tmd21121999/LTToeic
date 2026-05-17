@@ -1,0 +1,43 @@
+@using AntDesign
+
+<div style="display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-bottom:8px;">
+    <div style="text-align:center; flex:1; min-width:90px;">
+        <Statistic Title="Đúng" Value="@Correct"
+                   ValueStyle="color:#52c41a; font-weight:600;" />
+    </div>
+    <div style="text-align:center; flex:1; min-width:90px;">
+        <Statistic Title="Sai" Value="@Incorrect"
+                   ValueStyle="color:#ff4d4f; font-weight:600;" />
+    </div>
+    <div style="text-align:center; flex:1; min-width:90px;">
+        <Statistic Title="Bỏ qua" Value="@Skipped"
+                   ValueStyle="color:#8c8c8c; font-weight:600;" />
+    </div>
+    <div style="text-align:center; flex:1; min-width:90px;">
+        <Statistic Title="Độ chính xác"
+                   Value="@Accuracy.ToString("F1")"
+                   Suffix="%"
+                   ValueStyle="color:#1B527A; font-weight:600;" />
+    </div>
+    <div style="text-align:center; flex:1; min-width:90px;">
+        <Statistic Title="Thời gian"
+                   Value="@FormatTime(CompletionTimeSeconds)"
+                   ValueStyle="color:#595959; font-weight:600;" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Correct { get; set; }
+    [Parameter] public int Incorrect { get; set; }
+    [Parameter] public int Skipped { get; set; }
+    [Parameter] public float Accuracy { get; set; }
+    [Parameter] public int CompletionTimeSeconds { get; set; }
+
+    private static string FormatTime(int seconds)
+    {
+        var h = seconds / 3600;
+        var m = (seconds % 3600) / 60;
+        var s = seconds % 60;
+        return h > 0 ? $"{h:D2}:{m:D2}:{s:D2}" : $"{m:D2}:{s:D2}";
+    }
+}

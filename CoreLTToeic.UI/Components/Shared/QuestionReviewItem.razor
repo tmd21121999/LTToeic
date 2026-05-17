@@ -1,0 +1,76 @@
+@using AntDesign
+@using CoreLTToeic.Application.Models.ViewModels
+
+<Card Style="margin-bottom:12px; border-radius:8px;" Bordered>
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <strong style="font-size:1rem;">Câu @QuestionNumber</strong>
+        @if (Answer.IsCorrect)
+        {
+            <Tag Color="@("success")">Đúng</Tag>
+        }
+        else if (string.IsNullOrEmpty(Answer.SelectedAnswer))
+        {
+            <Tag>Bỏ qua</Tag>
+        }
+        else
+        {
+            <Tag Color="@("error")">Sai</Tag>
+        }
+        @if (Answer.PartNum is >= 1 and <= 4)
+        {
+            <Tag Color="@("processing")">
+                <Icon Type="sound" Theme="@IconThemeType.Outline" /> Phần nghe
+            </Tag>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(Answer.Image))
+    {
+        <div style="margin-bottom:8px;">
+            <img src="@Answer.Image" alt="question image"
+                 style="max-width:100%; max-height:300px; border-radius:6px;" />
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Answer.QuestionContent))
+    {
+        <div style="margin-bottom:12px;">
+            @((MarkupString)(Answer.QuestionContent ?? ""))
+        </div>
+    }
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        @foreach (var opt in Options)
+        {
+            string label = opt.Key;
+            string? text = opt.Value;
+            bool isCorrect = Answer.CorrectAnswer == label;
+            bool isSelected = Answer.SelectedAnswer == label;
+            string tagColor = (isSelected && isCorrect) ? "success"
+                            : (isSelected && !isCorrect) ? "error"
+                            : (!isSelected && isCorrect) ? "processing"
+                            : "default";
+
+            <Tag Color="@tagColor" Style="padding:6px 10px; white-space:normal; height:auto; display:block;">
+                <strong>(@label)</strong> @text
+                @if (isCorrect && !isSelected)
+                {
+                    <span style="color:inherit;"> ← Đáp án đúng</span>
+                }
+            </Tag>
+        }
+    </div>
+</Card>
+
+@code {
+    [Parameter, EditorRequired] public UserAnswerViewModel Answer { get; set; } = null!;
+    [Parameter] public int QuestionNumber { get; set; }
+
+    private IEnumerable<KeyValuePair<string, string?>> Options =>
+    [
+        new("A", Answer.Answer1),
+        new("B", Answer.Answer2),
+        new("C", Answer.Answer3),
+        new("D", Answer.Answer4),
+    ];
+}

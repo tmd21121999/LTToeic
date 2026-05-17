@@ -1,6 +1,6 @@
 # LTToeic — Bảng Theo Dõi Chức Năng
 
-> Cập nhật lần cuối: 2026-05-17
+> Cập nhật lần cuối: 2026-05-17 (session 2)
 > Đánh dấu `[x]` khi hoàn thành, thêm ngày hoàn thành vào cuối dòng.
 
 ---
@@ -36,13 +36,15 @@
 | 3.1 | Danh sách đề thi (`/luyen-thi`) | ✅ Hoàn thành | `TestList.razor` |
 | 3.2 | Làm bài thi (`/luyen-thi/{TestId}`) | ✅ Hoàn thành | `TakeTest.razor`, timer, answer sheet |
 | 3.3 | Nộp bài & tính điểm tự động | ✅ Hoàn thành | `UserResultService.SubmitTestAsync` |
-| 3.4 | Trang kết quả sau khi nộp bài | ❌ Chưa làm | `UserResult` entity có đủ data nhưng chưa có trang hiển thị |
-| 3.5 | Xem lại đáp án chi tiết sau thi | ❌ Chưa làm | |
+| 3.4 | Trang kết quả sau khi nộp bài | ✅ Hoàn thành | `TestResult.razor` `/ket-qua/{ResultId}` — 2026-05-17 |
+| 3.5 | Xem lại đáp án chi tiết sau thi | ✅ Hoàn thành | `QuestionReviewItem.razor` — màu đúng/sai/bỏ qua, nhóm theo Part — 2026-05-17 |
 | 3.6 | Lịch sử các lần thi của người dùng | ❌ Chưa làm | `UserResultRepository.GetByUserIdAsync` đã có |
 | 3.7 | Chế độ luyện tập từng Part | ❌ Chưa làm | Enum `TestMode.Practice` đã có |
-| 3.8 | Chế độ thi thử toàn bài | ✅ Hoàn thành | `TestMode.Simulation` |
+| 3.8 | Chế độ thi thử toàn bài (120 phút cố định) | ✅ Hoàn thành | `TestMode.Simulation`, màn hình chọn chế độ — 2026-05-17 |
 | 3.9 | Lọc/tìm kiếm đề thi theo danh mục | ⚠️ Một phần | UI có filter, backend cần kiểm tra |
-| 3.10 | Bảng quy đổi điểm Listening/Reading | ⚠️ Thiếu dữ liệu | Entity `ReadingScoreConversion` + `ListeningScoreConversion` có, chưa seed data |
+| 3.10 | Bảng quy đổi điểm Listening/Reading | ✅ Hoàn thành | Seeder 101 dòng (0–100→5–495), `ScoreConversionRepository` lookup — 2026-05-17 |
+| 3.11 | Màn hình chọn chế độ thi trước khi bắt đầu | ✅ Hoàn thành | `TestStartScreen.razor` — Thi thử (120p) / Luyện tập (30/60/90/120p / không giới hạn) — 2026-05-17 |
+| 3.12 | Timer đếm lên khi luyện tập không giới hạn | ✅ Hoàn thành | `_countUp` mode trong `TakeTest.razor`, lưu thời gian thực khi nộp — 2026-05-17 |
 
 ---
 
@@ -100,7 +102,7 @@
 | 7.1 | Dashboard thống kê (số user, lượt thi...) | ❌ Chưa làm | |
 | 7.2 | Quản lý người dùng (danh sách, phân quyền) | ❌ Chưa làm | |
 | 7.3 | Xem kết quả thi của tất cả user | ❌ Chưa làm | |
-| 7.4 | Quản lý bảng quy đổi điểm | ❌ Chưa làm | Entity `ReadingScoreConversion`, `ListeningScoreConversion` có |
+| 7.4 | Quản lý bảng quy đổi điểm | ⚠️ Một phần | Seeder + repository đã có, chưa có trang admin để chỉnh sửa |
 | 7.5 | Phân quyền bảo vệ tất cả route `/admin/*` | ❌ Chưa làm | |
 
 ---
@@ -115,7 +117,8 @@
 | 8.4 | AutoMapper profiles | ✅ Hoàn thành | |
 | 8.5 | Email xác nhận (SMTP Gmail) | ✅ Hoàn thành | |
 | 8.6 | Endpoint `GET /api/auth/confirm` | ❌ Chưa làm | Controller thiếu — xem `auth.md` |
-| 8.7 | Seed data bảng quy đổi điểm | ❌ Chưa làm | |
+| 8.7 | Seed data bảng quy đổi điểm | ✅ Hoàn thành | `ScoreConversionSeeder` — 101 dòng mỗi bảng, idempotent — 2026-05-17 |
+| 8.8 | Components tái sử dụng kết quả thi | ✅ Hoàn thành | `TestScoreCard`, `TestResultStats`, `QuestionReviewItem`, `TestStartScreen` — 2026-05-17 |
 
 ---
 
@@ -124,7 +127,7 @@
 | Layer | Đã làm | Chưa làm |
 |-------|--------|----------|
 | Authentication | Đăng ký, đăng nhập, đăng xuất | Quên MK, xác nhận email API, đổi MK |
-| Test | Làm bài, nộp bài, admin CRUD | Kết quả sau thi, lịch sử, luyện Part riêng |
+| Test | Làm bài, nộp bài, admin CRUD, kết quả sau thi, xem lại đáp án, chọn chế độ thi, quy đổi điểm | Lịch sử thi, luyện từng Part riêng |
 | Course | Admin CRUD đầy đủ | Toàn bộ UI phía user |
 | User Profile | — | Hồ sơ, dashboard, ảnh đại diện |
 | Admin | Quản lý đề thi, khóa học | Dashboard, user management, phân quyền |
@@ -137,3 +140,4 @@
 | Ngày | Chức năng hoàn thành |
 |------|---------------------|
 | 2026-05-17 | Khởi tạo file tracking, khảo sát toàn bộ codebase |
+| 2026-05-17 | **Ưu tiên 2 hoàn thành:** Trang kết quả `/ket-qua/{ResultId}`, xem lại đáp án theo Part, màn hình chọn chế độ thi (`TestStartScreen`), timer đếm lên cho luyện tập không giới hạn, seeder bảng quy đổi điểm TOEIC chuẩn, 4 shared components mới |

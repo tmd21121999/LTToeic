@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using System.Net;
 using CoreLTToeic.Application.Models.EditModels;
 using CoreLTToeic.Application.Common.Constants;
+using Microsoft.Data.SqlClient;
 
 namespace CoreLTToeic.Infrastructure.Repositories
 {
@@ -58,49 +59,64 @@ namespace CoreLTToeic.Infrastructure.Repositories
 
         public async Task<IdentityResult> Register(RegisterEditModel registerModel)
         {
-            if (await _userManager.FindByNameAsync(registerModel.UserName) != null)
+            try
             {
-                throw new Exception(MessageConstants.USER_ALREADY_EXIST);
-            }
+                if (await _userManager.FindByNameAsync(registerModel.UserName) != null)
+                {
+                    throw new Exception(MessageConstants.USER_ALREADY_EXIST);
+                }
 
-            var newUser = new AppUser
-            {
-                UserName = registerModel.UserName,
-                Email = registerModel.Email,
-                FullName = registerModel.FullName,
-                CreateTime = DateTime.UtcNow,
-            };
+                var newUser = new AppUser
+                {
+                    UserName = registerModel.UserName,
+                    Email = registerModel.Email,
+                    FullName = registerModel.FullName,
+                    CreateTime = DateTime.UtcNow,
+                };
 
-            var res = await _userManager.CreateAsync(newUser, registerModel.Password);
-
-            if (res.Succeeded)
-            {
+                IdentityResult res;
                 try
                 {
-                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
-                    var encodedToken = WebUtility.UrlEncode(token);
+                    res = await _userManager.CreateAsync(newUser, registerModel.Password);
+                }
+                catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
+                {
+                    throw new Exception("Tên đăng nhập hoặc email đã được sử dụng.");
+                }
 
-                    var baseUrl = _configuration["App:BaseUrl"]?.TrimEnd('/') ?? string.Empty;
-                    var confirmPath = _configuration["App:ConfirmEmailPath"] ?? "/api/auth/confirmemail";
-                    var confirmUrl = $"{baseUrl}{confirmPath}?userId={WebUtility.UrlEncode(newUser.Id)}&token={encodedToken}";
+                if (res.Succeeded)
+                {
+                    try
+                    {
+                        var token = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
+                        var encodedToken = WebUtility.UrlEncode(token);
 
-                    var subject = "Confirm your LTToeic account";
-                    var body = $@"
+                        var baseUrl = _configuration["App:BaseUrl"]?.TrimEnd('/') ?? string.Empty;
+                        var confirmPath = _configuration["App:ConfirmEmailPath"] ?? "/api/auth/confirmemail";
+                        var confirmUrl = $"{baseUrl}{confirmPath}?userId={WebUtility.UrlEncode(newUser.Id)}&token={encodedToken}";
+
+                        var subject = "Confirm your LTToeic account";
+                        var body = $@"
                         <p>Hi {newUser.FullName},</p>
                         <p>Please confirm your account by clicking the link below:</p>
                         <p><a href=""{confirmUrl}"">Confirm email</a></p>
                         <p>If you did not request this, ignore this email.</p>
                         <p>Regards,<br/>LTToeic Team</p>";
 
-                    await _emailSender.SendEmailAsync(newUser.Email, subject, body);
+                        await _emailSender.SendEmailAsync(newUser.Email, subject, body);
+                    }
+                    catch
+                    {
+                        // Do not fail registration if email sending fails. Log the error (add ILogger) if desired.
+                    }
                 }
-                catch
-                {
-                    // Do not fail registration if email sending fails. Log the error (add ILogger) if desired.
-                }
-            }
 
-            return res;
+                return res;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
 
         public async Task<IdentityResult> ConfirmEmailAsync(string userId, string token)

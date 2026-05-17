@@ -30,6 +30,7 @@
             </FormItem>
             <FormItem Style="margin-bottom:0">
                 <Button Type="ButtonType.Primary" HtmlType="submit" Block Size="@AntDesign.ButtonSize.Large"
+                        Loading="@_loading" Disabled="@_loading"
                         Style="background:#1B527A;border-color:#1B527A;font-weight:600;height:44px">
                     Đăng ký
                 </Button>
@@ -45,15 +46,19 @@
 
 @code {
     private RegisterEditModel _model = new();
+    private bool _loading = false;
 
     private async Task OnFinish()
     {
+        if (_loading) return;
+
         if (string.IsNullOrWhiteSpace(_model.Password) || _model.Password != _model.ConfirmPassword)
         {
             await Message.ErrorAsync("Mật khẩu xác nhận không khớp");
             return;
         }
 
+        _loading = true;
         try
         {
             var result = await AuthRepository.Register(_model);
@@ -71,6 +76,10 @@
         catch (Exception ex)
         {
             await Message.ErrorAsync($"Lỗi: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
         }
     }
 }
